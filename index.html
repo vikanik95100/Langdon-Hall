@@ -1,0 +1,883 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Langdon Hall Guest App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Montserrat:wght@400;500;600;700&display=swap"><style>
+/* ============================================================
+   TOKENS — page stage (theme-aware)
+   ============================================================ */
+:root{
+  --stage:#E4E0DA;
+  --stage-2:#F6F4F0;
+  --stage-3:#D9D5CE;
+  --ink:#1B1D28;
+  --ink-2:#555A66;
+  --muted:#7C808A;
+  --line:#CFCBC3;
+  --line-soft:#D4D0C8;
+  --accent:#7F6B3D;
+  --accent-soft:#EFD9B4;
+  --pine:#1F212E;
+  --on-pine:#F6F4F0;
+  --shadow:0 30px 70px -30px rgba(22,33,28,.45), 0 4px 14px -6px rgba(22,33,28,.2);
+
+  --display:"Playfair Display",Georgia,"Times New Roman",serif;
+  --ui:"Montserrat",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --mono:"Montserrat",-apple-system,sans-serif;
+
+  /* app palette — fixed: a device screen keeps its own identity */
+  --app-bg:#F6F4F0;
+  --app-surface:#FFFFFF;
+  --app-ink:#1B1D28;
+  --app-ink-2:#4B4F5B;
+  --app-muted:#7C808A;
+  --app-line:#E1DDD5;
+  --app-pine:#1F212E;
+  --app-pine-2:#3B4150;
+  --app-marigold:#97855C;
+  --app-marigold-ink:#6F5E36;
+  --app-clay:#9A6F4C;
+  --app-clay-soft:#F1EADB;
+  --app-mint:#EBE8E4;
+  --app-sand:#EFE8DC;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --stage:#0F1018;
+    --stage-2:#171923;
+    --stage-3:#1E202D;
+    --ink:#E8E4DE;
+    --ink-2:#CBCBC8;
+    --muted:#9A9CA6;
+    --line:#2B2E3E;
+    --line-soft:#242736;
+    --accent:#97855C;
+    --accent-soft:#3A2E17;
+    --pine:#B8A67C;
+    --on-pine:#0F1018;
+    --shadow:0 40px 90px -40px rgba(0,0,0,.8), 0 4px 18px -8px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --stage:#0F1018;
+  --stage-2:#171923;
+  --stage-3:#1E202D;
+  --ink:#E8E4DE;
+  --ink-2:#CBCBC8;
+  --muted:#9A9CA6;
+  --line:#2B2E3E;
+  --line-soft:#242736;
+  --accent:#97855C;
+  --accent-soft:#3A2E17;
+  --pine:#B8A67C;
+  --on-pine:#0F1018;
+  --shadow:0 40px 90px -40px rgba(0,0,0,.8), 0 4px 18px -8px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--stage);
+  color:var(--ink);
+  font-family:var(--ui);
+  font-size:15px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{margin:0;text-wrap:balance}
+p{margin:0}
+ul{margin:0;padding:0;list-style:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.eyebrow{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);
+}
+
+/* ============================================================
+   PAGE CHROME
+   ============================================================ */
+.topbar{
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:18px 28px;border-bottom:1px solid var(--line);
+  background:var(--stage-2);
+}
+.mark{
+  width:38px;height:38px;border-radius:11px;flex:none;
+  background:var(--pine);color:var(--on-pine);
+  display:grid;place-items:center;
+  font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.02em;
+}
+.topbar-title{display:flex;flex-direction:column;gap:1px;margin-right:auto}
+.topbar-title strong{font-family:var(--display);font-weight:600;font-size:19px;letter-spacing:-.01em}
+.topbar-title span{font-size:12.5px;color:var(--muted)}
+.tag{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  padding:5px 9px;border-radius:6px;border:1px solid var(--line);color:var(--muted);
+}
+.tag.hot{border-color:var(--accent);color:var(--accent)}
+.tag.toggle{cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.tag.toggle:hover{border-color:var(--ink-2);color:var(--ink)}
+.tag.toggle[aria-pressed="true"]{background:var(--pine);border-color:var(--pine);color:var(--on-pine)}
+
+/* ============================================================
+   THREE-COLUMN STAGE
+   ============================================================ */
+.layout{
+  display:grid;
+  grid-template-columns:238px minmax(0,1fr);
+  gap:0;
+  align-items:start;
+  min-height:calc(100vh - 76px);
+}
+/* Demo view is the default: Italian prototype only, no English on screen.
+   The "Note" button (or N) reveals the presenter notes. */
+body[data-notes="on"] .notes{display:block}
+@media (min-width:1181px){
+  body[data-notes="on"] .layout{grid-template-columns:238px minmax(0,1fr) 340px}
+}
+.rail{
+  border-right:1px solid var(--line);
+  padding:22px 16px 40px;
+  position:sticky;top:0;
+  max-height:100vh;overflow-y:auto;
+}
+.rail-group{margin-bottom:18px}
+.rail-group > .eyebrow{padding:0 10px 7px}
+.rail-item{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:8px 10px;border-radius:9px;color:var(--ink-2);
+  font-size:13.5px;font-weight:500;transition:background .15s,color .15s;
+}
+.rail-item:hover{background:var(--stage-3);color:var(--ink)}
+.rail-item .num{
+  font-family:var(--mono);font-size:10.5px;color:var(--muted);
+  width:18px;flex:none;
+}
+.rail-item[aria-current="true"]{background:var(--pine);color:var(--on-pine);font-weight:600}
+.rail-item[aria-current="true"] .num{color:inherit;opacity:.65}
+
+.stage{
+  padding:30px 20px 48px;
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+  background:
+    radial-gradient(680px 420px at 50% 18%, color-mix(in srgb, var(--accent) 11%, transparent), transparent 70%),
+    var(--stage);
+}
+.stage-hint{
+  display:flex;align-items:center;gap:9px;color:var(--muted);font-size:12.5px;
+}
+.stage-hint .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none}
+
+.notes{
+  display:none;
+  border-left:1px solid var(--line);
+  padding:26px 24px 48px;
+  position:sticky;top:0;
+  max-height:100vh;overflow-y:auto;
+  background:var(--stage-2);
+}
+
+/* ============================================================
+   PHONE FRAME
+   ============================================================ */
+.phone-wrap{
+  --s:1;
+  width:calc(414px * var(--s));
+  height:calc(836px * var(--s));
+}
+.phone{
+  width:414px;height:836px;
+  transform:scale(var(--s));transform-origin:top center;
+  border-radius:50px;
+  background:linear-gradient(160deg,#272A38,#121420 55%,#212433);
+  padding:12px;
+  box-shadow:var(--shadow), 0 0 0 1.5px rgba(255,255,255,.07) inset;
+  position:relative;
+}
+.phone::after{
+  content:"";position:absolute;left:50%;transform:translateX(-50%);
+  top:24px;width:104px;height:26px;border-radius:14px;background:#0B0C12;z-index:6;
+}
+.screen{
+  width:100%;height:100%;border-radius:39px;overflow:hidden;
+  background:var(--app-bg);color:var(--app-ink);
+  display:flex;flex-direction:column;position:relative;
+}
+
+/* status bar */
+.statusbar{
+  height:48px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;
+  padding:0 26px 4px;font-size:12.5px;font-weight:700;letter-spacing:.01em;
+  position:relative;z-index:5;
+}
+.statusbar.on-dark{color:#fff}
+.sb-right{display:flex;align-items:center;gap:5px}
+.sb-bar{width:3px;border-radius:1px;background:currentColor}
+.sb-batt{width:22px;height:11px;border:1.4px solid currentColor;border-radius:3px;position:relative;opacity:.9}
+.sb-batt::before{content:"";position:absolute;inset:2px;right:6px;background:currentColor;border-radius:1px}
+
+/* scrolling body */
+.app-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.app-scroll::-webkit-scrollbar{display:none}
+.pad{padding:0 20px}
+.stack{display:flex;flex-direction:column}
+
+/* app views */
+.view{display:none;height:100%;flex-direction:column}
+.view.active{display:flex}
+
+/* ============================================================
+   APP COMPONENTS
+   ============================================================ */
+.a-h1{font-family:var(--display);font-size:27px;font-weight:600;letter-spacing:-.02em;line-height:1.15}
+.a-h2{font-family:var(--display);font-size:19px;font-weight:600;letter-spacing:-.015em}
+.a-h3{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.a-label{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--app-muted);
+}
+.a-meta{font-size:12px;color:var(--app-muted);font-weight:500}
+
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px}
+.sec-head .link{font-size:12px;font-weight:600;color:var(--app-pine-2)}
+
+.appbar{
+  flex:none;display:flex;align-items:center;gap:12px;padding:2px 20px 14px;
+}
+.appbar .a-h2{margin-right:auto}
+.icon-btn{
+  width:36px;height:36px;border-radius:11px;flex:none;
+  display:grid;place-items:center;background:var(--app-surface);
+  border:1px solid var(--app-line);color:var(--app-ink-2);
+}
+.icon-btn.ghost{background:transparent;border-color:transparent}
+.icon-btn.on-dark{background:rgba(255,255,255,.16);border-color:transparent;color:#fff}
+
+.card{
+  background:var(--app-surface);border:1px solid var(--app-line);
+  border-radius:18px;padding:14px;
+}
+
+/* thumbnails built from gradients + line art, no external assets */
+.thumb{
+  position:relative;overflow:hidden;border-radius:14px;flex:none;
+  background:linear-gradient(145deg,var(--t1,#3C6455),var(--t2,#1E3A30));
+}
+.thumb > svg:not(.ico){position:absolute;inset:0;width:100%;height:100%}
+.thumb > svg.ico{position:relative}
+.thumb .dur{
+  position:absolute;right:6px;bottom:6px;z-index:2;
+  font-family:var(--mono);font-size:9.5px;color:#fff;
+  background:rgba(11,16,14,.62);padding:2px 5px;border-radius:5px;
+}
+.t-river{--t1:#7FA7B5;--t2:#2D5566}
+.t-terra{--t1:#B07A55;--t2:#4F3223}
+.t-raiva{--t1:#4A5A57;--t2:#161C1B}
+.t-spa{--t1:#B7C4B0;--t2:#586B5C}
+.t-star{--t1:#3C4466;--t2:#12152B}
+.t-wine{--t1:#9C5B6B;--t2:#46202B}
+.t-sunset{--t1:#97855C;--t2:#8C3F46}
+.t-canyon{--t1:#6FA39A;--t2:#1F5249}
+.t-hills{--t1:#9FB28F;--t2:#47573F}
+.t-gift{--t1:#D9B79A;--t2:#7A5238}
+.t-pool{--t1:#7FB6B8;--t2:#2C6568}
+.t-house{--t1:#586872;--t2:#171923}
+.t-dining{--t1:#B8A67C;--t2:#3B3520}
+.t-grand{--t1:#97855C;--t2:#1F212E}
+.t-wilks{--t1:#7C5F58;--t2:#2A1A1A}
+.t-spa{--t1:#A6A684;--t2:#4F5238}
+.t-pool{--t1:#7FA0AE;--t2:#2B4452}
+.t-garden{--t1:#A6A684;--t2:#3F4A2C}
+.t-wine{--t1:#8E5568;--t2:#3E1D2A}
+.t-trail{--t1:#8C9B7A;--t2:#33422B}
+.t-event{--t1:#6B6A86;--t2:#1F1F33}
+.t-gift{--t1:#D2BE9A;--t2:#6F5A36}
+.t-pilates{--t1:#3E6858;--t2:#1D362C}
+.t-yoga{--t1:#5C7F8C;--t2:#2A414B}
+.t-flow{--t1:#B07B2E;--t2:#5E3D11}
+.t-mobility{--t1:#6E7F5A;--t2:#33402A}
+.t-zumba{--t1:#C0705E;--t2:#6B3226}
+.t-prenatal{--t1:#C99A9A;--t2:#7A4E52}
+
+/* horizontal rails */
+.hrail{display:flex;gap:12px;overflow-x:auto;padding:2px 20px 4px;scrollbar-width:none}
+.hrail::-webkit-scrollbar{display:none}
+
+/* class list row */
+.row{
+  display:flex;gap:12px;align-items:center;width:100%;text-align:left;
+  background:var(--app-surface);border:1px solid var(--app-line);
+  border-radius:16px;padding:9px;transition:border-color .15s,transform .1s;
+}
+.row:hover{border-color:var(--app-pine-2)}
+.row:active{transform:scale(.99)}
+.row .thumb{width:70px;height:62px}
+.row-body{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.row-body .t{font-size:13.5px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
+
+/* pills / chips */
+.pill{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;
+  background:var(--app-mint);color:var(--app-pine);
+}
+.pill.sand{background:var(--app-sand);color:var(--app-marigold-ink)}
+.pill.clay{background:var(--app-clay-soft);color:#8E4437}
+.pill.live{background:#FBE9E6;color:#A83B2A}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding:0 20px 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:none;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;
+  border:1px solid var(--app-line);background:var(--app-surface);color:var(--app-ink-2);
+}
+.chip[aria-pressed="true"]{background:var(--app-pine);border-color:var(--app-pine);color:#fff}
+
+.seg{
+  display:flex;gap:3px;background:var(--app-line);padding:3px;border-radius:12px;
+}
+.seg button{
+  flex:1;font-size:12.5px;font-weight:600;padding:7px 4px;border-radius:9px;color:var(--app-ink-2);
+}
+.seg button[aria-pressed="true"]{background:var(--app-surface);color:var(--app-ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+/* buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-size:14px;font-weight:700;padding:13px 18px;border-radius:14px;
+  background:var(--app-pine);color:#fff;width:100%;transition:filter .15s;
+}
+.btn:hover{filter:brightness(1.1)}
+.btn.amber{background:var(--app-marigold);color:#2A1B04}
+.btn.outline{background:transparent;border:1.5px solid var(--app-line);color:var(--app-ink)}
+.btn.sm{font-size:12.5px;padding:8px 14px;width:auto;border-radius:11px}
+
+/* progress */
+.bar{display:block;height:6px;border-radius:99px;background:var(--app-line);overflow:hidden}
+.bar > i{display:block;height:100%;border-radius:99px;background:var(--app-pine-2)}
+.bar.amber > i{background:var(--app-marigold)}
+.bar.clay > i{background:var(--app-clay)}
+
+/* tab bar */
+.tabbar{
+  flex:none;display:flex;padding:9px 8px 22px;
+  background:color-mix(in srgb, var(--app-surface) 88%, transparent);
+  backdrop-filter:blur(14px);
+  border-top:1px solid var(--app-line);
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:9.5px;font-weight:600;color:var(--app-muted);padding:4px 0;
+}
+.tab[aria-current="true"]{color:var(--app-pine)}
+.tab svg{width:21px;height:21px}
+
+/* hero blocks */
+.hero-pine{
+  background:linear-gradient(155deg,#2A2D3C,#161824);color:#fff;position:relative;overflow:hidden;
+}
+.hero-pine .deco{position:absolute;inset:0;opacity:.55}
+
+/* stat grid */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.stat{background:var(--app-surface);border:1px solid var(--app-line);border-radius:15px;padding:11px 12px}
+.stat b{display:block;font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+
+/* schedule */
+.slot{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--app-line)}
+.slot:last-child{border-bottom:0}
+.slot .time{font-family:var(--mono);font-size:12px;font-weight:500;width:44px;flex:none;padding-top:2px}
+.week{display:flex;gap:6px}
+.day{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:8px 0;border-radius:12px;border:1px solid transparent;font-size:11px;color:var(--app-muted);
+}
+.day b{font-size:14px;color:var(--app-ink);font-variant-numeric:tabular-nums}
+.day[aria-pressed="true"]{background:var(--app-pine);border-color:var(--app-pine);color:rgba(255,255,255,.75)}
+.day[aria-pressed="true"] b{color:#fff}
+
+/* day rows in a program */
+.dayrow{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--app-line);width:100%;text-align:left}
+.dayrow:last-child{border-bottom:0}
+.tick{
+  width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;
+  border:1.5px solid var(--app-line);color:var(--app-muted);
+}
+.tick.done{background:var(--app-pine);border-color:var(--app-pine);color:#fff}
+.tick.today{border-color:var(--app-marigold);color:var(--app-marigold-ink);border-width:2px}
+
+/* quote from Roberta */
+.quote{
+  background:var(--app-sand);border-radius:16px;padding:13px 14px;
+  font-family:var(--display);font-size:14px;line-height:1.45;color:#4A3E22;
+}
+.quote .who{display:block;margin-top:7px;font-family:var(--ui);font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--app-marigold-ink)}
+
+/* settings list */
+.list-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:13px 0;border-bottom:1px solid var(--app-line);font-size:14px;font-weight:600}
+.list-item:last-child{border-bottom:0}
+.list-item .v{margin-left:auto;font-size:12.5px;font-weight:500;color:var(--app-muted)}
+
+/* plan cards */
+.plan{
+  width:100%;text-align:left;border:1.5px solid var(--app-line);background:var(--app-surface);
+  border-radius:18px;padding:14px;display:flex;gap:12px;align-items:flex-start;
+}
+.plan[aria-pressed="true"]{border-color:var(--app-pine);background:var(--app-mint)}
+.radio{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--app-line);flex:none;margin-top:2px;display:grid;place-items:center}
+.plan[aria-pressed="true"] .radio{border-color:var(--app-pine);background:var(--app-pine);color:#fff}
+
+/* toggle */
+.switch{width:42px;height:25px;border-radius:99px;background:var(--app-pine);position:relative;flex:none;margin-left:auto}
+.switch::after{content:"";position:absolute;top:2.5px;left:20px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .18s}
+.switch[aria-pressed="false"]{background:var(--app-line)}
+.switch[aria-pressed="false"]::after{left:2.5px}
+
+/* success burst */
+.burst{
+  width:76px;height:76px;border-radius:50%;display:grid;place-items:center;
+  background:var(--app-pine);color:#fff;margin:0 auto;
+  box-shadow:0 0 0 12px var(--app-mint);
+}
+
+/* ============================================================
+   NOTES PANEL
+   ============================================================ */
+.notes h2{font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:-.02em;margin:6px 0 10px}
+.notes .n-list{display:flex;flex-direction:column;gap:9px;margin-top:6px}
+.notes .n-list li{display:flex;gap:9px;font-size:13.5px;color:var(--ink-2);line-height:1.5}
+.notes .n-list li::before{
+  content:"";width:5px;height:5px;border-radius:50%;background:var(--accent);
+  flex:none;margin-top:8px;
+}
+.n-why{
+  margin-top:20px;padding:14px;border-radius:13px;
+  background:var(--stage);border:1px solid var(--line-soft);
+}
+.n-why p{font-size:13.5px;color:var(--ink-2);margin-top:6px;line-height:1.5}
+.n-nav{display:flex;gap:8px;margin-top:22px}
+.n-nav button{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px;border-radius:11px;border:1px solid var(--line);
+  font-size:13px;font-weight:600;color:var(--ink-2);background:var(--stage-2);
+}
+.n-nav button:hover:not(:disabled){background:var(--stage-3);color:var(--ink)}
+.n-nav button:disabled{opacity:.4;cursor:not-allowed}
+.n-foot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line-soft);font-size:12px;color:var(--muted);line-height:1.6}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:1180px){
+  .layout{grid-template-columns:1fr;min-height:0}
+  .rail{
+    position:static;max-height:none;border-right:0;border-bottom:1px solid var(--line);
+    display:flex;gap:8px;overflow-x:auto;padding:12px 16px;
+  }
+  .rail-group{display:flex;align-items:center;gap:8px;margin:0}
+  .rail-group > .eyebrow{padding:0 4px 0 6px;white-space:nowrap}
+  .rail-item{width:auto;white-space:nowrap;border:1px solid var(--line);padding:7px 12px}
+  .rail-item .num{display:none}
+  .notes{position:static;max-height:none;border-left:0;border-top:1px solid var(--line)}
+}
+@media (max-width:520px){
+  .phone-wrap{--s:.78}
+  .stage{padding:20px 10px 34px}
+  .topbar{padding:14px 16px}
+}
+
+
+.a-h1{font-size:33px;font-weight:500;letter-spacing:-.01em;line-height:1.1}.a-h2{font-size:23px;font-weight:500;letter-spacing:-.005em}.stat b{font-size:23px;font-weight:500}
+.a-label,.eyebrow{font-weight:700;font-size:9.5px;letter-spacing:.12em}
+.quote{font-size:15px}.mark{font-size:20px;font-weight:600;border-radius:9px}.topbar-title strong{font-size:22px;font-weight:500}
+.btn{font-weight:700}.btn.amber{color:#1F212E}
+.pill.sand{color:#6F5E36}
+.bubble{max-width:82%;padding:10px 13px;border-radius:16px;font-size:13.5px;line-height:1.45}
+.bubble.in{background:var(--app-surface);border:1px solid var(--app-line);border-bottom-left-radius:5px;align-self:flex-start}
+.bubble.out{background:var(--app-pine);color:#fff;border-bottom-right-radius:5px;align-self:flex-end}
+.bubble small{display:block;font-size:10.5px;opacity:.6;margin-top:4px}
+.bubble .acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.bubble .acts button{font-size:12px;font-weight:700;padding:6px 11px;border-radius:99px;background:var(--app-mint);color:#3B4150}
+.typing{display:flex;gap:4px;padding:13px 14px}.typing i{width:6px;height:6px;border-radius:50%;background:var(--app-muted);animation:bl 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,60%,100%{opacity:.25}30%{opacity:1}}
+.slotgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slotbtn{padding:10px 4px;border-radius:13px;border:1.5px solid var(--app-line);background:var(--app-surface);text-align:center;font-size:13px;font-weight:700}
+.slotbtn small{display:block;font-size:10.5px;font-weight:500;color:var(--app-muted);margin-top:1px}
+.slotbtn[aria-pressed="true"]{border-color:#97855C;background:#F1EADB;color:#6F5E36}
+.slotbtn:disabled{opacity:.45;cursor:not-allowed}
+.chip[aria-pressed="true"]{background:var(--app-pine);border-color:var(--app-pine)}
+.stepper{display:flex;align-items:center;gap:12px}
+.stepper button{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--app-line);background:var(--app-surface);font-size:17px;font-weight:700;line-height:1}
+.stepper b{font-family:var(--display);font-size:22px;font-weight:500;min-width:20px;text-align:center}
+.qgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.qa{display:flex;gap:10px;align-items:center;text-align:left;padding:12px;border-radius:15px;background:var(--app-surface);border:1px solid var(--app-line);font-size:13px;font-weight:700;line-height:1.25}
+.qa i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--app-mint);color:#3B4150;flex:none}
+.qa:hover{border-color:#97855C}
+.menu-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--app-line);align-items:flex-start}
+.menu-item:last-child{border-bottom:0}
+.timeline{position:relative;padding-left:22px}
+.timeline::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--app-line)}
+.tl{position:relative;padding:0 0 16px}
+.tl::before{content:"";position:absolute;left:-21px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--app-surface);border:2.5px solid var(--app-pine-2)}
+.tl.now::before{border-color:#97855C;background:#97855C}
+.tl.sug::before{border-style:dashed;border-color:var(--app-muted)}
+.tl .t{font-size:11px;color:var(--app-muted);font-weight:700}
+.payopt{width:100%;text-align:left;display:flex;gap:12px;align-items:center;padding:13px;border:1.5px solid var(--app-line);border-radius:15px;background:var(--app-surface);font-size:13.5px;font-weight:700}
+.payopt[aria-pressed="true"]{border-color:#97855C;background:#F1EADB}
+.payopt .radio{margin:0}
+.payopt[aria-pressed="true"] .radio{border-color:#97855C;background:#97855C;color:#1F212E}
+.qrbox{background:#fff;border-radius:20px;padding:16px;border:1px solid var(--app-line);display:grid;place-items:center}
+.hrow{display:flex;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--app-line)}
+.hrow:last-child{border-bottom:0}.hrow b{font-size:13.5px;font-weight:700}.hrow .h{margin-left:auto;font-size:12.5px;color:var(--app-ink-2);font-variant-numeric:tabular-nums;text-align:right}
+.price{font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums;margin-left:auto;white-space:nowrap}
+.burst{background:#97855C;color:#1F212E;box-shadow:0 0 0 12px #F1EADB}
+.step{display:flex;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid var(--app-line);width:100%;text-align:left}
+.step:last-child{border-bottom:0}
+.tick.done{background:#586872;border-color:#586872}
+.rowlist .menu-item{align-items:center}
+</style></head><body>
+<svg style="display:none" aria-hidden="true"><symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5h4v5"/></symbol><symbol id="i-compass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol><symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></symbol><symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol><symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></symbol><symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></symbol><symbol id="i-drop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></symbol><symbol id="i-fork" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v8a2 2 0 0 1-2 2M7 3v6M17 21V3c-2.5 1.5-3 5-3 8h3"/></symbol><symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M5 5l1.8 1.8M17.2 17.2L19 19M19 5l-1.8 1.8M6.8 17.2L5 19"/></symbol><symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2z"/></symbol><symbol id="i-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></symbol><symbol id="i-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></symbol><symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></symbol><symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 1.5 5.5H5S6.5 14 6.5 10z"/><path d="M10 19a2.2 2.2 0 0 0 4 0"/></symbol><symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s6.5-6.1 6.5-10.5a6.5 6.5 0 1 0-13 0C5.5 14.9 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.4"/></symbol><symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12L20 4l-6 16-2.5-6.5z"/></symbol><symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10.5h18M7 15h3"/></symbol><symbol id="i-qr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 14h2v6h-4M14 18h2"/></symbol><symbol id="i-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M8.5 7.5L12 4l3.5 3.5"/><path d="M5.5 13v5.5a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V13"/></symbol><symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></symbol><symbol id="i-gift" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8h14v-8M12 8c-2-4-6-3-5 0 .6 1.6 3 1.5 5 0zM12 8c2-4 6-3 5 0-.6 1.6-3 1.5-5 0z"/></symbol><symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/></symbol><symbol id="i-paw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="9" r="1.8"/><circle cx="12" cy="6.500" r="1.8"/><circle cx="17" cy="9" r="1.8"/><path d="M12 12c-3 0-5 2.500-5 4.500 0 1.500 1.500 2 3 1.500 1-.300 1.500-.500 2-.500s1 .200 2 .500c1.500.500 3 0 3-1.500 0-2-2-4.500-5-4.500z"/></symbol><symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.500A8 8 0 0 1 9.500 4a8 8 0 1 0 10.500 10.500z"/></symbol></svg>
+<header class="topbar"><div class="mark">L</div><div class="topbar-title"><strong>Langdon&nbsp;Hall&nbsp;Guest&nbsp;App</strong><span>Concept prototype · a branded guest app for Langdon Hall</span></div><span class="tag hot">Clickable</span><span class="tag">14 screens</span><span class="tag">iOS &amp; Android</span><button class="tag toggle" id="notes-toggle" aria-pressed="false" title="Presenter notes (N)">Notes</button></header>
+<div class="layout"><nav class="rail" id="rail" aria-label="Screen index">
+<div class="rail-group"><div class="eyebrow">Arrival</div><button class="rail-item" data-go="welcome"><span class="num">01</span>Welcome</button><button class="rail-item" data-go="home"><span class="num">02</span>Today</button></div>
+<div class="rail-group"><div class="eyebrow">Discover</div><button class="rail-item" data-go="experiences"><span class="num">03</span>Experiences</button><button class="rail-item" data-go="dining"><span class="num">04</span>Dining</button><button class="rail-item" data-go="spa"><span class="num">05</span>Spa &amp; wellness</button><button class="rail-item" data-go="events"><span class="num">06</span>What's on</button></div>
+<div class="rail-group"><div class="eyebrow">Book without calling</div><button class="rail-item" data-go="slots"><span class="num">07</span>Pick a time</button><button class="rail-item" data-go="checkout"><span class="num">08</span>Checkout</button><button class="rail-item" data-go="confirmed"><span class="num">09</span>Confirmed</button><button class="rail-item" data-go="pass"><span class="num">10</span>Reservation pass</button></div>
+<div class="rail-group"><div class="eyebrow">During your stay</div><button class="rail-item" data-go="chat"><span class="num">11</span>Concierge</button><button class="rail-item" data-go="services"><span class="num">12</span>Room &amp; services</button><button class="rail-item" data-go="offers"><span class="num">13</span>Offers</button><button class="rail-item" data-go="stay"><span class="num">14</span>My stay</button></div></nav><main class="stage"><div class="phone-wrap"><div class="phone"><div class="screen">
+<section class="view" data-view="welcome" style="background:linear-gradient(180deg,#1F212E 0%,#171923 31%,#F6F4F0 31.1%,#F6F4F0 100%)"><div class="statusbar on-dark"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="app-scroll" style="display:flex;flex-direction:column">
+<div style="position:relative;height:204px;flex:none;display:grid;place-items:center;overflow:hidden"><img alt="Langdon Hall" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjEwIiBoZWlnaHQ9IjQ4IiB2aWV3Qm94PSIwIDAgMjEwIDQ4IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8ZyBjbGlwLXBhdGg9InVybCgjY2xpcDBfNzcyXzU2ODUpIj4KPHBhdGggZD0iTTY0LjQ2NjcgMjkuNDYxOUM2NC45MTExIDI5LjcyODMgNjUuMjkyMSAzMC4wMzY4IDY2LjAyNTggMzAuNjI1N0M2Ny40ODYxIDMxLjgxMDcgNjguODk3MSAzMi43MDgxIDcwLjcxNzIgMzIuODgzNEM3MS41NDk3IDMyLjk2MDUgNzIuNDI0NSAzMi45NjA1IDczLjAzMTIgMzIuODA2M0M3NC4yNzk5IDMyLjQ4MzggNzQuNjk2MSAzMS41MjMyIDc0LjY3NSAzMS43MTk1Qzc0LjU4MzMgMzIuNzIyMiA3Mi45ODE4IDMzLjgyMjkgNzAuOTQzIDMzLjgyMjlDNjguNTAyIDMzLjgyMjkgNjYuOTA3NyAzMi41ODE5IDY1LjE5MzMgMzEuMjIxN0M2My41NDI1IDI5Ljg4MjUgNjIuNjE4MyAyOS4zNDk3IDYxLjM0ODUgMjkuMzQ5N0g2MC42OTI0VjI4Ljg3MjlDNjIuMjMwMyAyOC43NzQ3IDYyLjU1NDggMjguNjYyNiA2Mi41NTQ4IDI3LjIxMTJWMTguMTE3NEM2Mi41NTQ4IDE2LjY0NSA2Mi4yMzAzIDE2LjU1MzkgNjAuNjkyNCAxNi40NTU3VjE1Ljk3ODlINjYuMzI5MlYxNi40NTU3QzY0Ljc5MTIgMTYuNTUzOSA2NC40NjY3IDE2LjY0NSA2NC40NjY3IDE4LjExNzRWMjkuNDY4OVYyOS40NjE5WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTc5LjQwODYgMjcuNDg0N0M3OS43MzMxIDI4LjM3NTEgODAuMTE0MSAyOC43NzQ4IDgxLjAxMDEgMjguODcyOVYyOS4zNDk3SDc2LjA0MzVWMjguODcyOUM3Ny40NzU2IDI4Ljc3NDggNzcuODAwMSAyOC40OTQzIDc3LjQ5NjggMjcuNjk1TDc2LjU1ODUgMjUuMjY5MUg3MS4zNDVMNzAuNDI3OSAyNy42OTVDNzAuMTM4NiAyOC40MTcyIDcwLjU4MzEgMjguNzc0OCA3Mi4wNTA1IDI4Ljg3MjlWMjkuMzQ5N0g2Ny44MTA1VjI4Ljg3MjlDNjguNzYyOSAyOC43NzQ4IDY5LjIyMTUgMjguMzgyMSA2OS41MzE5IDI3LjU4MjhMNzMuOTQxMiAxNi4wNjMxSDc1LjAyNzZMNzkuNDAxNiAyNy40ODQ3SDc5LjQwODZaTTcxLjY2OTUgMjQuNDI3N0g3Ni4yMzRMNzMuOTIgMTguNDg5MUw3MS42Njk1IDI0LjQyNzdaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNODEuMzM0NSAyOS4zNDI3VjI4Ljg2NTlDODIuODY1NCAyOC43Njc4IDgzLjIwNCAyOC42NTU2IDgzLjIwNCAyNy4yMTgyVjE4LjE4NzZDODMuMjA0IDE2LjcyOTIgODIuODU4MyAxNi42MzEgODEuMzM0NSAxNi41Mzk5VjE2LjA2MzFIODUuNDk2OEw5Mi4wMjk1IDI1Ljk5MTJWMTguMTg3NkM5Mi4wMjk1IDE2LjcyOTIgOTEuNzYxNSAxNi42MzEgOTAuMjE2NSAxNi41Mzk5VjE2LjA2MzFIOTQuODM3M1YxNi41Mzk5QzkzLjMwNjQgMTYuNjM4IDkzLjAwMzEgMTYuNzI5MiA5My4wMDMxIDE4LjE4NzZWMjkuMzQ5N0g5MS45NzMxTDg0LjE4NDYgMTcuNTA3NVYyNy4yMjUzQzg0LjE4NDYgMjguNjY5NiA4NC41MzAzIDI4Ljc4MTggODYuMDU0MSAyOC44NzI5VjI5LjM0OTdIODEuMzM0NVYyOS4zNDI3WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTEwNi40NSAyOC4yNjI5QzEwNS42MSAyOS4wNDEyIDEwNC4yOTEgMjkuNjMwMSAxMDIuNDQzIDI5LjYzMDFDOTguNzE3OSAyOS42MzAxIDk2LjA4NjQgMjYuNzA2NCA5Ni4wODY0IDIyLjcwMjlDOTYuMDg2NCAxOC42OTk0IDk4LjcyNDkgMTUuNzc1NiAxMDIuNDY0IDE1Ljc3NTZDMTAzLjkxNyAxNS43NzU2IDEwNS4wMzkgMTYuMTc1MyAxMDUuODA4IDE2LjcyMjJMMTA2LjA3NiAxNi4wNTYxSDEwNi42NDdMMTA3LjgxMSAxOS43NTgxTDEwNy4zNzQgMTkuOTEyNEMxMDYuMTg5IDE3Ljc2NjkgMTA0LjYyMyAxNi41ODkgMTAyLjU5OCAxNi41ODlDOTkuNTQzMyAxNi41ODkgOTguMTg4OCAxOS4xNDgxIDk4LjE4ODggMjIuNzAyOUM5OC4xODg4IDI2LjI1NzcgOTkuNTQzMyAyOC43OTU4IDEwMi41NDIgMjguNzk1OEMxMDQuMjIxIDI4Ljc5NTggMTA1LjQ2MiAyNy45ODI1IDEwNS44NjQgMjcuNDQ5NlYyNS40MDIzQzEwNS44NjQgMjMuOTU3OSAxMDUuNTYxIDIzLjg0NTcgMTA0LjAzIDIzLjc1NDZWMjMuMjc3OEgxMDkuNTQ3VjIzLjc1NDZDMTA4LjA5NCAyMy44NTI4IDEwNy43NTUgMjMuOTY0OSAxMDcuNzU1IDI1LjQwMjNWMjkuMzQ5N0gxMDcuMTg0TDEwNi40NTcgMjguMjY5OUwxMDYuNDUgMjguMjYyOVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMTAuMzA5IDI5LjM0MjdWMjguODY1OUMxMTEuODM5IDI4Ljc2NzggMTEyLjE2NCAyOC42NTU2IDExMi4xNjQgMjcuMjE4MlYxOC4xODc2QzExMi4xNjQgMTYuNzI5MiAxMTEuODM5IDE2LjYzMSAxMTAuMzA5IDE2LjUzOTlWMTYuMDYzMUgxMTYuMzI2QzEyMC43IDE2LjA2MzEgMTIzLjQ4NyAxOC4yNDM3IDEyMy40ODcgMjIuNzAyOUMxMjMuNDg3IDI3LjE2MjEgMTIwLjcgMjkuMzQyNyAxMTYuMzI2IDI5LjM0MjdIMTEwLjMwOVpNMTE0LjYyNiAxNi45MTg1QzExNC4yNjYgMTYuOTE4NSAxMTQuMDU1IDE3LjEyODggMTE0LjA1NSAxNy40ODY0VjI3LjkyNjRDMTE0LjA1NSAyOC4yODQgMTE0LjI2NiAyOC40OTQzIDExNC42MjYgMjguNDk0M0gxMTYuMzI2QzExOS4xNjkgMjguNDk0MyAxMjEuMzg1IDI3LjQxNDYgMTIxLjM4NSAyMi43MDI5QzEyMS4zODUgMTcuOTkxMiAxMTkuMTY5IDE2LjkxMTUgMTE2LjMyNiAxNi45MTE1SDExNC42MjZWMTYuOTE4NVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMzcuODY1IDIyLjcwMjlDMTM3Ljg2NSAyNi43MDY0IDEzNS40MzggMjkuNjMwMSAxMzEuNTA4IDI5LjYzMDFDMTI3LjU3OSAyOS42MzAxIDEyNS4xNjYgMjYuNzA2NCAxMjUuMTY2IDIyLjcwMjlDMTI1LjE2NiAxOC42OTk0IDEyNy41OTMgMTUuNzc1NiAxMzEuNTA4IDE1Ljc3NTZDMTM1LjQyNCAxNS43NzU2IDEzNy44NjUgMTguNjk5NCAxMzcuODY1IDIyLjcwMjlaTTEzNS43NjkgMjIuNzAyOUMxMzUuNzY5IDE5LjE1NTEgMTM0LjY0MSAxNi41ODkgMTMxLjUwOCAxNi41ODlDMTI4LjM3NiAxNi41ODkgMTI3LjI2OCAxOS4xNDgxIDEyNy4yNjggMjIuNzAyOUMxMjcuMjY4IDI2LjI1NzcgMTI4LjM5NyAyOC43OTU4IDEzMS41MDggMjguNzk1OEMxMzQuNjE5IDI4Ljc5NTggMTM1Ljc2OSAyNi4yNTA3IDEzNS43NjkgMjIuNzAyOVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMzkuMjgzIDI5LjM0MjdWMjguODY1OUMxNDAuODE0IDI4Ljc2NzggMTQxLjE1MiAyOC42NTU2IDE0MS4xNTIgMjcuMjE4MlYxOC4xODc2QzE0MS4xNTIgMTYuNzI5MiAxNDAuODA3IDE2LjYzMSAxMzkuMjgzIDE2LjUzOTlWMTYuMDYzMUgxNDMuNDQ1TDE0OS45NzggMjUuOTkxMlYxOC4xODc2QzE0OS45NzggMTYuNzI5MiAxNDkuNzEgMTYuNjMxIDE0OC4xNjUgMTYuNTM5OVYxNi4wNjMxSDE1Mi43ODZWMTYuNTM5OUMxNTEuMjU1IDE2LjYzOCAxNTAuOTUxIDE2LjcyOTIgMTUwLjk1MSAxOC4xODc2VjI5LjM0OTdIMTQ5LjkyMUwxNDIuMTMzIDE3LjUwNzVWMjcuMjI1M0MxNDIuMTMzIDI4LjY2OTYgMTQyLjQ3OSAyOC43ODE4IDE0NC4wMDIgMjguODcyOVYyOS4zNDk3SDEzOS4yODNWMjkuMzQyN1oiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xNjYuODgxIDI5LjM0MjdWMjguODY1OUMxNjguNDEyIDI4Ljc2NzggMTY4LjczNiAyOC42NTU2IDE2OC43MzYgMjcuMjE4MlYyMi44MzYxSDE2Mi4zMDNWMjcuMjE4MkMxNjIuMzAzIDI4LjY2MjYgMTYyLjYyNyAyOC43NzQ4IDE2NC4xNTggMjguODY1OVYyOS4zNDI3SDE1OC41NjNWMjguODY1OUMxNjAuMDk0IDI4Ljc2NzggMTYwLjQxOSAyOC42NTU2IDE2MC40MTkgMjcuMjE4MlYxOC4xODc2QzE2MC40MTkgMTYuNzI5MiAxNjAuMDk0IDE2LjYzMSAxNTguNTYzIDE2LjUzOTlWMTYuMDYzMUgxNjQuMTU4VjE2LjUzOTlDMTYyLjYyNyAxNi42MzggMTYyLjMwMyAxNi43MjkyIDE2Mi4zMDMgMTguMTg3NlYyMS45ODA3SDE2OC43MzZWMTguMTg3NkMxNjguNzM2IDE2LjcyOTIgMTY4LjQxMiAxNi42MzEgMTY2Ljg4MSAxNi41Mzk5VjE2LjA2MzFIMTcyLjQ3NlYxNi41Mzk5QzE3MC45NDUgMTYuNjM4IDE3MC42MiAxNi43MjkyIDE3MC42MiAxOC4xODc2VjI3LjIxODJDMTcwLjYyIDI4LjY2MjYgMTcwLjk0NSAyOC43NzQ4IDE3Mi40NzYgMjguODY1OVYyOS4zNDI3SDE2Ni44ODFaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTg0LjM5MSAyNy40ODQ3QzE4NC43MTYgMjguMzc1MSAxODUuMDk3IDI4Ljc3NDggMTg1Ljk5MiAyOC44NzI5VjI5LjM0OTdIMTgxLjAyNlYyOC44NzI5QzE4Mi40NTggMjguNzc0OCAxODIuNzgzIDI4LjQ5NDMgMTgyLjQ3OSAyNy42OTVMMTgxLjU0MSAyNS4yNjkxSDE3Ni4zMjdMMTc1LjQxIDI3LjY5NUMxNzUuMTIxIDI4LjQxNzIgMTc1LjU2NiAyOC43NzQ4IDE3Ny4wMzMgMjguODcyOVYyOS4zNDk3SDE3Mi43OTNWMjguODcyOUMxNzMuNzQ1IDI4Ljc3NDggMTc0LjIwNCAyOC4zODIxIDE3NC41MTQgMjcuNTgyOEwxNzguOTI0IDE2LjA2MzFIMTgwLjAxTDE4NC4zODQgMjcuNDg0N0gxODQuMzkxWk0xNzYuNjU5IDI0LjQyNzdIMTgxLjIyM0wxNzguOTE3IDE4LjQ4OTFMMTc2LjY2NiAyNC40Mjc3SDE3Ni42NTlaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTkxLjg3NiAyOC40OTQzQzE5NC41NzEgMjguNDk0MyAxOTYuMDE4IDI3LjMxNjQgMTk3LjQxNCAyNS42MTI2TDE5Ny43OTUgMjUuODU4TDE5NS45MjYgMjkuMzQ5N0gxODYuMzI0VjI4Ljg3MjlDMTg3Ljg1NSAyOC43NzQ4IDE4OC4xOCAyOC42NjI2IDE4OC4xOCAyNy4yMjUzVjE4LjE5NDZDMTg4LjE4IDE2LjczNjIgMTg3Ljg1NSAxNi42MzgxIDE4Ni4zMjQgMTYuNTQ2OVYxNi4wNzAxSDE5MS45MTlWMTYuNTQ2OUMxOTAuMzg4IDE2LjY0NTEgMTkwLjA2MyAxNi43MzYyIDE5MC4wNjMgMTguMTk0NlYyNy45MzM0QzE5MC4wNjMgMjguMjkxIDE5MC4yNzUgMjguNTAxMyAxOTAuNjM1IDI4LjUwMTNIMTkxLjg3NlYyOC40OTQzWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTIwNC4wODEgMjguNDk0M0MyMDYuNzc2IDI4LjQ5NDMgMjA4LjIyMiAyNy4zMTY0IDIwOS42MTkgMjUuNjEyNkwyMTAgMjUuODU4TDIwOC4xMyAyOS4zNDk3SDE5OC41MjlWMjguODcyOUMyMDAuMDYgMjguNzc0OCAyMDAuMzg0IDI4LjY2MjYgMjAwLjM4NCAyNy4yMjUzVjE4LjE5NDZDMjAwLjM4NCAxNi43MzYyIDIwMC4wNiAxNi42MzgxIDE5OC41MjkgMTYuNTQ2OVYxNi4wNzAxSDIwNC4xMjNWMTYuNTQ2OUMyMDIuNTkyIDE2LjY0NTEgMjAyLjI2OCAxNi43MzYyIDIwMi4yNjggMTguMTk0NlYyNy45MzM0QzIwMi4yNjggMjguMjkxIDIwMi40NzkgMjguNTAxMyAyMDIuODM5IDI4LjUwMTNIMjA0LjA4MVYyOC40OTQzWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTg1LjA2NjYgMzguOTkwNEw4NS42OTQ0IDM5LjI5ODlDODUuNDEyMiAzOS43MTk2IDg0LjgzMzggNDAuMDYzMSA4NC4wNDM2IDQwLjA2MzFDODIuOTE0OSA0MC4wNjMxIDgyLjE4MTIgMzkuNDY3MSA4Mi4xODEyIDM4LjQ3MTVDODIuMTgxMiAzNy40NzU5IDgyLjkxNDkgMzYuODc5OSA4NC4wNzg5IDM2Ljg3OTlDODQuODMzOCAzNi44Nzk5IDg1LjQxMjIgMzcuMjIzNSA4NS42ODc0IDM3LjYzNzJMODUuMDUyNSAzNy45NDU3Qzg0Ljg0MDggMzcuNjA5MSA4NC41MDkyIDM3LjQ2MTkgODQuMDY0OCAzNy40NjE5QzgzLjM1MjMgMzcuNDYxOSA4Mi44Nzk2IDM3LjgwNTQgODIuODc5NiAzOC40NjQ1QzgyLjg3OTYgMzkuMTIzNiA4My4zNTIzIDM5LjQ2NzEgODQuMDY0OCAzOS40NjcxQzg0LjUwOTIgMzkuNDY3MSA4NC44NDA4IDM5LjMxOTkgODUuMDY2NiAzOC45ODM0VjM4Ljk5MDRaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNODYuODQ0MiAzOC40Nzg1Qzg2Ljg0NDIgMzcuNDc1OSA4Ny41ODUgMzYuODg3IDg4Ljc1NjEgMzYuODg3Qzg5LjkyNzIgMzYuODg3IDkwLjY2NzkgMzcuNDc1OSA5MC42Njc5IDM4LjQ3ODVDOTAuNjY3OSAzOS40ODEyIDg5LjkyNzIgNDAuMDcwMSA4OC43NTYxIDQwLjA3MDFDODcuNTg1IDQwLjA3MDEgODYuODQ0MiAzOS40ODEyIDg2Ljg0NDIgMzguNDc4NVpNODkuOTY5NSAzOC40Nzg1Qzg5Ljk2OTUgMzcuODQwNSA4OS41MDM5IDM3LjQ3NTkgODguNzU2MSAzNy40NzU5Qzg4LjAwODMgMzcuNDc1OSA4Ny41NDI3IDM3LjgzMzUgODcuNTQyNyAzOC40Nzg1Qzg3LjU0MjcgMzkuMTIzNiA4OC4wMDgzIDM5LjQ4MTIgODguNzU2MSAzOS40ODEyQzg5LjUwMzkgMzkuNDgxMiA4OS45Njk1IDM5LjEyMzYgODkuOTY5NSAzOC40Nzg1WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTk1LjQ3MjMgMzYuOTg1MVYzOC41NjI3Qzk1LjQ3MjMgMzkuNDYwMSA5NC44NzI2IDQwLjA2MzEgOTMuNzg2MiA0MC4wNjMxQzkyLjY5OTggNDAuMDYzMSA5Mi4xMDAxIDM5LjQ1MzEgOTIuMTAwMSAzOC41NjI3VjM2Ljk4NTFIOTIuNzg0NFYzOC41MTM2QzkyLjc4NDQgMzkuMTA5NiA5My4xMzcyIDM5LjQ2NzEgOTMuNzg2MiAzOS40NjcxQzk0LjQzNTIgMzkuNDY3MSA5NC43ODggMzkuMTA5NiA5NC43ODggMzguNTEzNlYzNi45ODUxSDk1LjQ3MjNaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTAwLjUwOSAzNi45ODUxVjM5Ljk3OUg5OS45MDk4TDk3Ljc1MSAzNy44MTk1VjM5Ljk3OUg5Ny4wODc5VjM2Ljk4NTFIOTcuODIxNkw5OS44NTM0IDM5LjAzMjRWMzYuOTg1MUgxMDAuNTE3SDEwMC41MDlaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTA1LjE1MiAzNy41NzQxSDEwMy44NFYzOS45NzJIMTAzLjE1NVYzNy41NzQxSDEwMS44NVYzNi45ODUxSDEwNS4xNTlWMzcuNTc0MUgxMDUuMTUyWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTEwOS4xMjQgMzkuOTcyTDEwOC4yNjMgMzguOTU1M0gxMDcuMTc3VjM5Ljk3MkgxMDYuNDkyVjM2Ljk3ODFIMTA4LjU2NkMxMDkuMyAzNi45NzgxIDEwOS44NTcgMzcuMzE0NiAxMDkuODU3IDM3Ljk2NjdDMTA5Ljg1NyAzOC40Nzg1IDEwOS41MTkgMzguNzk0IDEwOS4wMTggMzguOTA2MkwxMDkuOTQ5IDM5Ljk3MkgxMDkuMTMxSDEwOS4xMjRaTTEwOC41MjQgMzguMzk0NEMxMDguODg0IDM4LjM5NDQgMTA5LjE1MiAzOC4zMTAzIDEwOS4xNTIgMzcuOTczN0MxMDkuMTUyIDM3LjYzNzIgMTA4Ljg4NCAzNy41NTMgMTA4LjUyNCAzNy41NTNIMTA3LjE2MlYzOC4zODc0SDEwOC41MjRWMzguMzk0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMTEuNTg2IDM2Ljk4NTFMMTEyLjYwMSAzOC4zODc0TDExMy42MSAzNi45ODUxSDExNC4zODZMMTEyLjk0IDM4Ljk1NTNWMzkuOTc5SDExMi4yNTZWMzguOTU1M0wxMTAuODEgMzYuOTg1MUgxMTEuNTkzSDExMS41ODZaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIwLjk4OSAzNi45ODUxVjM5Ljk3OUgxMjAuMzA1VjM4Ljc1OUgxMTguMjUyVjM5Ljk3OUgxMTcuNTY4VjM2Ljk4NTFIMTE4LjI1MlYzOC4xNjNIMTIwLjMwNVYzNi45ODUxSDEyMC45ODlaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIyLjQ2NCAzOC40Nzg1QzEyMi40NjQgMzcuNDc1OSAxMjMuMjA1IDM2Ljg4NyAxMjQuMzc2IDM2Ljg4N0MxMjUuNTQ3IDM2Ljg4NyAxMjYuMjg4IDM3LjQ3NTkgMTI2LjI4OCAzOC40Nzg1QzEyNi4yODggMzkuNDgxMiAxMjUuNTQ3IDQwLjA3MDEgMTI0LjM3NiA0MC4wNzAxQzEyMy4yMDUgNDAuMDcwMSAxMjIuNDY0IDM5LjQ4MTIgMTIyLjQ2NCAzOC40Nzg1Wk0xMjUuNTg5IDM4LjQ3ODVDMTI1LjU4OSAzNy44NDA1IDEyNS4xMjQgMzcuNDc1OSAxMjQuMzc2IDM3LjQ3NTlDMTIzLjYyOCAzNy40NzU5IDEyMy4xNjIgMzcuODMzNSAxMjMuMTYyIDM4LjQ3ODVDMTIzLjE2MiAzOS4xMjM2IDEyMy42MjggMzkuNDgxMiAxMjQuMzc2IDM5LjQ4MTJDMTI1LjEyNCAzOS40ODEyIDEyNS41ODkgMzkuMTIzNiAxMjUuNTg5IDM4LjQ3ODVaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTMxLjA5MiAzNi45ODUxVjM4LjU2MjdDMTMxLjA5MiAzOS40NjAxIDEzMC40OTIgNDAuMDYzMSAxMjkuNDA2IDQwLjA2MzFDMTI4LjMxOSA0MC4wNjMxIDEyNy43MiAzOS40NTMxIDEyNy43MiAzOC41NjI3VjM2Ljk4NTFIMTI4LjQwNFYzOC41MTM2QzEyOC40MDQgMzkuMTA5NiAxMjguNzU3IDM5LjQ2NzEgMTI5LjQwNiAzOS40NjcxQzEzMC4wNTUgMzkuNDY3MSAxMzAuNDA4IDM5LjEwOTYgMTMwLjQwOCAzOC41MTM2VjM2Ljk4NTFIMTMxLjA5MloiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xMzUuODk2IDM5LjA2NzVDMTM1Ljg5NiAzOS42NTY1IDEzNS4zMzIgNDAuMDcwMSAxMzQuMjY3IDQwLjA3MDFDMTMzLjUwNSA0MC4wNzAxIDEzMi44ODQgMzkuODU5OCAxMzIuNDI1IDM5LjQ2NzJMMTMyLjgyIDM5LjAwNDRDMTMzLjE4NyAzOS4zNDEgMTMzLjY2NyAzOS41MDIyIDEzNC4yODEgMzkuNTAyMkMxMzQuODk0IDM5LjUwMjIgMTM1LjE5OCAzOS4zOSAxMzUuMTk4IDM5LjEzNzZDMTM1LjE5OCAzOC44ODUyIDEzNC44ODcgMzguODIyMSAxMzQuMTk2IDM4Ljc1OUMxMzMuMzM1IDM4LjY4ODkgMTMyLjUzOCAzOC40OTk2IDEzMi41MzggMzcuODU0NUMxMzIuNTM4IDM3LjIwOTUgMTMzLjIwOCAzNi44ODcgMTM0LjE0IDM2Ljg4N0MxMzQuNzk2IDM2Ljg4NyAxMzUuMzY3IDM3LjA0ODIgMTM1Ljc0OCAzNy4zNDI3TDEzNS4zNjcgMzcuODE5NUMxMzUuMDM2IDM3LjU2NzEgMTM0LjYyNiAzNy40NjE5IDEzNC4xNCAzNy40NjE5QzEzMy43MyAzNy40NjE5IDEzMy4yMyAzNy41MzIgMTMzLjIzIDM3LjgwNTVDMTMzLjIzIDM4LjA2NDkgMTMzLjY2IDM4LjA4NTkgMTM0LjI2IDM4LjEzNUMxMzUuMjE5IDM4LjIxMjEgMTM1Ljg5NiAzOC40MTU0IDEzNS44OTYgMzkuMDY3NVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0xNDAuNDEyIDM5LjM5N1YzOS45NzJIMTM3LjMxNFYzNi45NzgxSDE0MC4zNjlWMzcuNTUzSDEzNy45OTlWMzguMTdIMTM5Ljk4MVYzOC43NDVIMTM3Ljk5OVYzOS40MDRIMTQwLjQxMlYzOS4zOTdaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTQ3LjMzOSAzNi45ODUxVjM5Ljk3OUgxNDYuNjU1VjM4Ljc1OUgxNDQuNjAyVjM5Ljk3OUgxNDMuOTE3VjM2Ljk4NTFIMTQ0LjYwMlYzOC4xNjNIMTQ2LjY1NVYzNi45ODUxSDE0Ny4zMzlaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTQ4LjgxMyAzOC40Nzg1QzE0OC44MTMgMzcuNDc1OSAxNDkuNTU0IDM2Ljg4NyAxNTAuNzI1IDM2Ljg4N0MxNTEuODk2IDM2Ljg4NyAxNTIuNjM3IDM3LjQ3NTkgMTUyLjYzNyAzOC40Nzg1QzE1Mi42MzcgMzkuNDgxMiAxNTEuODk2IDQwLjA3MDEgMTUwLjcyNSA0MC4wNzAxQzE0OS41NTQgNDAuMDcwMSAxNDguODEzIDM5LjQ4MTIgMTQ4LjgxMyAzOC40Nzg1Wk0xNTEuOTM5IDM4LjQ3ODVDMTUxLjkzOSAzNy44NDA1IDE1MS40NzMgMzcuNDc1OSAxNTAuNzI1IDM3LjQ3NTlDMTQ5Ljk3OCAzNy40NzU5IDE0OS41MTIgMzcuODMzNSAxNDkuNTEyIDM4LjQ3ODVDMTQ5LjUxMiAzOS4xMjM2IDE0OS45NzggMzkuNDgxMiAxNTAuNzI1IDM5LjQ4MTJDMTUxLjQ3MyAzOS40ODEyIDE1MS45MzkgMzkuMTIzNiAxNTEuOTM5IDM4LjQ3ODVaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTU2Ljk5IDM3LjU3NDFIMTU1LjY3OFYzOS45NzJIMTU0Ljk5NFYzNy41NzQxSDE1My42ODhWMzYuOTg1MUgxNTYuOTk3VjM3LjU3NDFIMTU2Ljk5WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE2MS40MjEgMzkuMzk3VjM5Ljk3MkgxNTguMzI0VjM2Ljk3ODFIMTYxLjM3OFYzNy41NTNIMTU5LjAwOFYzOC4xN0gxNjAuOTlWMzguNzQ1SDE1OS4wMDhWMzkuNDA0SDE2MS40MjFWMzkuMzk3WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE2NS42ODkgMzkuMzgzVjM5Ljk3MkgxNjIuODc0VjM2Ljk3ODFIMTYzLjU1OFYzOS4zNzZIMTY1LjY4OVYzOS4zODNaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTcxLjY1IDM5Ljk3MkwxNzEuNDI0IDM5LjgwMzdDMTcxLjE0MiAzOS45NjUgMTcwLjc4MiA0MC4wNTYxIDE3MC4zNTIgNDAuMDU2MUMxNjkuNDQyIDQwLjA1NjEgMTY4Ljc3MSAzOS42MjE0IDE2OC43NzEgMzkuMDQ2NUMxNjguNzcxIDM4LjcwOTkgMTY4Ljk5NyAzOC40MjI1IDE2OS4zOTIgMzguMjYxMkMxNjkuMjMgMzguMTA2OSAxNjkuMTI0IDM3Ljk0NTcgMTY5LjEyNCAzNy43MjEzQzE2OS4xMjQgMzcuMjQ0NSAxNjkuNTgzIDM2Ljg4NyAxNzAuMzE2IDM2Ljg4N0MxNzEuMSAzNi44ODcgMTcxLjUwOSAzNy4yNTg2IDE3MS43NDIgMzcuNjcyMkwxNzEuMTc3IDM3Ljg5NjZDMTcwLjk0NCAzNy41MTEgMTcwLjY4MyAzNy4zNzA3IDE3MC4zMzEgMzcuMzcwN0MxNjkuOTc4IDM3LjM3MDcgMTY5Ljc3MyAzNy40OTcgMTY5Ljc3MyAzNy43MTQzQzE2OS43NzMgMzcuOTAzNiAxNjkuOTUgMzguMDIyOCAxNzAuMjg4IDM4LjI4MjJMMTcxLjM3NSAzOS4xMDk2QzE3MS40NjYgMzguOTU1MyAxNzEuNTIzIDM4Ljc2NiAxNzEuNTM3IDM4LjUzNDZIMTcyLjE1MUMxNzIuMTM3IDM4Ljg5MjIgMTcyLjAyNCAzOS4yMDA3IDE3MS44MjYgMzkuNDQ2MUwxNzIuNDk2IDM5Ljk1OEgxNzEuNjQzTDE3MS42NSAzOS45NzJaTTE3MC45NzMgMzkuNDY3MkwxNjkuNzI0IDM4LjU0MTdDMTY5LjU0IDM4LjY1MzggMTY5LjQ1NiAzOC44MjIxIDE2OS40NTYgMzguOTk3NEMxNjkuNDU2IDM5LjM3NiAxNjkuODY1IDM5LjU3OTMgMTcwLjM4NyAzOS41NzkzQzE3MC42MDYgMzkuNTc5MyAxNzAuODAzIDM5LjU0NDMgMTcwLjk3MyAzOS40NzQyVjM5LjQ2NzJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTc4Ljk4IDM5LjA2NzVDMTc4Ljk4IDM5LjY1NjUgMTc4LjQxNSA0MC4wNzAxIDE3Ny4zNSA0MC4wNzAxQzE3Ni41ODggNDAuMDcwMSAxNzUuOTY3IDM5Ljg1OTggMTc1LjUwOSAzOS40NjcyTDE3NS45MDQgMzkuMDA0NEMxNzYuMjcxIDM5LjM0MSAxNzYuNzUgMzkuNTAyMiAxNzcuMzY0IDM5LjUwMjJDMTc3Ljk3OCAzOS41MDIyIDE3OC4yODEgMzkuMzkgMTc4LjI4MSAzOS4xMzc2QzE3OC4yODEgMzguODg1MiAxNzcuOTcxIDM4LjgyMjEgMTc3LjI4IDM4Ljc1OUMxNzYuNDE5IDM4LjY4ODkgMTc1LjYyMiAzOC40OTk2IDE3NS42MjIgMzcuODU0NUMxNzUuNjIyIDM3LjIwOTUgMTc2LjI5MiAzNi44ODcgMTc3LjIyMyAzNi44ODdDMTc3Ljg3OSAzNi44ODcgMTc4LjQ1MSAzNy4wNDgyIDE3OC44MzIgMzcuMzQyN0wxNzguNDUxIDM3LjgxOTVDMTc4LjExOSAzNy41NjcxIDE3Ny43MSAzNy40NjE5IDE3Ny4yMjMgMzcuNDYxOUMxNzYuODE0IDM3LjQ2MTkgMTc2LjMxMyAzNy41MzIgMTc2LjMxMyAzNy44MDU1QzE3Ni4zMTMgMzguMDY0OSAxNzYuNzQzIDM4LjA4NTkgMTc3LjM0MyAzOC4xMzVDMTc4LjMwMiAzOC4yMTIxIDE3OC45OCAzOC40MTU0IDE3OC45OCAzOS4wNjc1WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE4My43NDkgMzcuOTk0N0MxODMuNzQ5IDM4LjY1MzggMTgzLjIzNCAzOS4wMDQ0IDE4Mi40NTggMzkuMDA0NEgxODEuMDg5VjM5Ljk3MkgxODAuNDA1VjM2Ljk3ODFIMTgyLjQ2NUMxODMuMjQxIDM2Ljk3ODEgMTgzLjc1NiAzNy4zMzU3IDE4My43NTYgMzcuOTg3N0wxODMuNzQ5IDM3Ljk5NDdaTTE4My4wNDMgMzguMDAxOEMxODMuMDQzIDM3LjY1ODIgMTgyLjc4MiAzNy41NiAxODIuNDAxIDM3LjU2SDE4MS4wODlWMzguNDUwNUgxODIuNDAxQzE4Mi43ODkgMzguNDUwNSAxODMuMDQzIDM4LjM0NTMgMTgzLjA0MyAzOC4wMDg4VjM4LjAwMThaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTg3LjI4NCAzOS4zNDA5SDE4NS40NjNMMTg1LjEzOSAzOS45NzJIMTg0LjQwNUwxODYgMzYuOTc4MUgxODYuNzU1TDE4OC4zNDkgMzkuOTcySDE4Ny42MDhMMTg3LjI4NCAzOS4zNDA5Wk0xODYuOTk0IDM4Ljc4N0wxODYuMzc0IDM3LjU2N0wxODUuNzUzIDM4Ljc4N0gxODcuMDAxSDE4Ni45OTRaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNTAuNzMxIDE1LjUzNzJWMTQuMzM4M0gzNi41NTA5VjE1LjUzNzJDNDAuNDI0IDE1Ljc3NTYgNDEuMjQyMyAxNi4wMjEgNDEuMjQyMyAxOS43MjMxVjMzLjk3NzJDNDEuMjA3IDMzLjg2NSA0MS4xNjQ3IDMzLjc1MjggNDEuMTI5NCAzMy42NDA3QzQxLjAzNzcgMzMuMzQ2MiA0MC45NjAxIDMzLjA0NDcgNDAuODgyNSAzMi43NDMyQzQwLjg2ODQgMzIuNzAxMSA0MC44Njg0IDMyLjY2NjEgNDAuODYxNCAzMi42MjRDNDAuNzY5NiAzMi4xNjgzIDQwLjcxMzIgMzIuMTI2MiA0MC4yNDc2IDMyLjE2ODNDNDAuMDcxMiAzMi4xODIzIDM5Ljg4NzggMzIuMTk2MyAzOS43MTE0IDMyLjIwMzNDMzkuNjEyNyAzMi4yMDMzIDM5LjUxMzkgMzIuMjAzMyAzOS40MTUxIDMyLjIwMzNDMzkuMzM3NSAzMi4yMDMzIDM5LjIzMTcgMzIuMjI0NCAzOS4xNTQxIDMyLjIwMzNDMzkuMDQ4MyAzMi4xODIzIDM5LjI1MjkgMzEuOTIyOSAzOS4yNzQgMzEuODg3OEMzOS40NTc1IDMxLjY0MjQgMzkuNjEyNyAzMS4zODMgMzkuNzgyIDMxLjEzMDZDMzkuOTIzMSAzMC45MTMyIDM5LjkzMDEgMzAuNjg4OSAzOS44NDU1IDMwLjQ1MDVDMzkuNjA1NiAyOS43NDIzIDM5LjM1MTYgMjkuMDQxMiAzOS4xMzI5IDI4LjMzM0MzOC45OTg5IDI3Ljg5ODMgMzguODkzMSAyNy40NTY2IDM4LjgxNTUgMjcuMDE0OUMzOC43NTIgMjYuNjIyMyAzOC44OTMxIDI2LjQ0IDM5LjI4MTEgMjYuMzIwOEMzOS40NzE2IDI2LjI2NDcgMzkuNjY5MSAyNi4yMjk2IDM5Ljg1OTYgMjYuMTgwNUM0MC4xOTgyIDI2LjA4OTQgNDAuNTc5MiAyNS41NDk1IDQwLjUyOTggMjUuMjA2QzQwLjUxNTcgMjUuMTIxOCA0MC40MTY5IDI1LjAwMjYgNDAuMzM5MyAyNC45ODg2QzM5Ljc4OSAyNC44ODM0IDM5LjIzODggMjQuNzg1MyAzOC42ODg1IDI0LjY5NDFDMzguNjAzOCAyNC41Njc5IDM4LjQ3NjggMjQuNDc2OCAzOC4zNjQgMjQuMzc4NkMzOC4yNTgxIDI0LjI4NzUgMzguMTY2NCAyNC4xODIzIDM4LjA4MTggMjQuMDYzMUMzOC4wMTEyIDIzLjk2NDkgMzcuOTU0OCAyMy44NjY4IDM3LjkyNjYgMjMuNzQwNkMzNy45MDU0IDIzLjYyMTQgMzcuOTEyNSAyMy40ODEyIDM3Ljk4MyAyMy4zNjJDMzcuOTA1NCAyMy4zOTcgMzcuODQxOSAyMy40MzkxIDM3Ljc5MjUgMjMuNTA5MkMzNy43Nzg0IDIzLjUzMDIgMzcuNzY0MyAyMy41NTEzIDM3Ljc0MzEgMjMuNTU4M0MzNy43MjIgMjMuNTU4MyAzNy43MDc5IDIzLjU1ODMgMzcuNjkzOCAyMy41NDQzQzM3LjI5MTYgMjMuMjA3NyAzNy4wOTQxIDIyLjY3NDggMzYuOTMxOCAyMi4xNDJDMzYuODg5NSAyMi4wMTU4IDM2Ljg1NDIgMjEuODgyNiAzNi44NDcyIDIxLjc0MjNDMzYuODMzMSAyMS41MjUgMzYuODgyNSAyMS4zMDA2IDM2LjkzODkgMjEuMDgzM0MzNi42NzA4IDIxLjQ4OTkgMzYuNjI4NSAyMS43NzA0IDM2LjY0MjYgMjEuOTU5N0MzNi42NjM4IDIyLjE3NyAzNi44MDQ4IDIyLjg2NDIgMzYuODY4MyAyMi45NjkzQzM2Ljg2ODMgMjIuOTY5MyAzNi44ODI1IDIyLjk5NzQgMzYuODc1NCAyMy4wMTg0QzM2Ljg2MTMgMjMuMDY3NSAzNi43OTc4IDIzLjA2NzUgMzYuNzU1NSAyMy4wNDY1QzM2LjQ5NDQgMjIuOTQxMyAzNi4yNjE2IDIyLjc4NyAzNi4wNjQxIDIyLjU5NzdDMzYuMTA2NCAyMi42ODg5IDM2LjE4NCAyMi44MjIxIDM2LjMwNCAyMi45NDgzQzM2LjQwMjcgMjMuMDQ2NSAzNi40ODc0IDIzLjEwMjUgMzYuNjM1NSAyMy4xOTM3QzM2Ljg4OTUgMjMuMzU1IDM2LjkxMDcgMjMuMzE5OSAzNy4wOCAyMy40NDYxQzM3LjIxNCAyMy41NDQzIDM3LjI5ODcgMjMuNjI4NCAzNy40NTM5IDIzLjc4OTdDMzcuNTgwOSAyMy45MjI5IDM3LjYzNzMgMjMuOTg2IDM3LjY3OTYgMjQuMDc3MUMzNy43MjIgMjQuMTc1MyAzNy43MjkgMjQuMjczNCAzNy43MjkgMjQuMzU3NkMzNy42MjMyIDI0LjMxNTUgMzcuNTI0NCAyNC4yNTk0IDM3LjQyNTcgMjQuMjAzM0MzNy4yNzc1IDI0LjExOTIgMzcuMTM2NCAyNC4wMjEgMzcuMDMwNiAyMy44ODc4QzM2LjkyNDggMjMuNzU0NiAzNi44NTQyIDIzLjU4NjMgMzYuODc1NCAyMy40MTgxQzM2Ljc5NzggMjMuNDg4MiAzNi43MjcyIDIzLjU2NTMgMzYuNzEzMSAyMy42NjM1QzM2LjcxMzEgMjMuNjkxNSAzNi43MDYxIDIzLjcyNjYgMzYuNjc3OSAyMy43NDA2QzM2LjY1NjcgMjMuNzU0NiAzNi42Mjg1IDIzLjc0MDYgMzYuNjA3MyAyMy43NDA2QzM1Ljg3MzYgMjMuNTE2MiAzNS4yODEgMjIuOTYyMyAzNC43NTE5IDIyLjQwODRDMzQuNjI0OSAyMi4yNzUyIDM0LjQ5MDkgMjIuMTM1IDM0LjM5OTIgMjEuOTgwN0MzNC4yNTEgMjEuNzM1MyAzNC4xODA1IDIxLjQ1NDkgMzQuMTE3IDIxLjE3NDRDMzQuMDExMiAyMS43NTY0IDM0LjEyNCAyMi4wOTk5IDM0LjI1ODEgMjIuMzE3M0MzNC40MTMzIDIyLjU2MjcgMzUuMDEyOSAyMy4zMDU5IDM1LjE2MTEgMjMuNDA0QzM1LjE2ODEgMjMuNDA0IDM1LjE5NjQgMjMuNDMyMSAzNS4xOTY0IDIzLjQ1MzFDMzUuMjEwNSAyMy41MTYyIDM1LjExODggMjMuNTM3MiAzNS4wNjIzIDIzLjUzNzJDMzQuNjUzMSAyMy41MTYyIDM0LjI1MSAyMy40MzIxIDMzLjg3MDEgMjMuMjg0OEMzMy45ODI5IDIzLjM3NiAzNC4xNTkzIDIzLjUwMjIgMzQuNDA2MiAyMy42MDA0QzM0LjU5NjcgMjMuNjc3NSAzNC43NTE5IDIzLjcxMjUgMzQuOTkxOCAyMy43NTQ2QzM1LjQyMjEgMjMuODM4NyAzNS40MzYyIDIzLjc5NjcgMzUuNzM5NiAyMy44NjY4QzM1Ljk3OTQgMjMuOTIyOSAzNi4xNDE3IDIzLjk5MyAzNi40MzggMjQuMTE5MkMzNi42Nzc5IDI0LjIyNDQgMzYuODA0OSAyNC4yNzM0IDM2LjkwMzYgMjQuMzY0NkMzNy4wNTE4IDI0LjQ5NzggMzcuMTM2NCAyNC42NTIxIDM3LjE4NTggMjQuNzc4M0MzNy4wOTQxIDI0Ljg3NjQgMzcuMDE2NSAyNC44NTU0IDM2LjkxMDcgMjQuNzc4M0MzNi42MjE0IDI0LjU1MzkgMzYuMjk2OSAyNC40NzY4IDM1LjkyMyAyNC41ODlDMzUuOTkzNSAyNC45NzQ2IDM2LjE1NTggMjUuMjc2MSAzNi41MjI3IDI1LjQzMDNDMzYuNjYzOCAyNS40OTM0IDM2LjY5OSAyNS41NTY1IDM2LjY3NzkgMjUuNzE3OEMzNi42MDczIDI2LjE4NzYgMzYuNTUwOSAyNi42NTczIDM2LjQ5NDQgMjcuMTI3MUMzNi40NTIxIDI3LjUxMjcgMzYuNDczMyAyOC4wMTc1IDM2LjI2ODcgMjguMzY4MUMzNi4yMTkzIDI4LjQ1MjIgMzYuMTU1OCAyOC41Mjk0IDM2LjA4NTMgMjguNTk5NUMzNS44ODA3IDI4LjgwOTggMzUuNjQwOCAyOC45NzgxIDM1LjM3OTggMjkuMTA0M0MzNS4xMDQ2IDI5LjIzNzUgMzQuODIyNSAyOS4yNTE1IDM0LjU0MDMgMjkuMzQyN0MzNC4xNTkzIDI5LjQ2ODkgMzMuNzY0MiAyOS41NTMgMzMuMzU1MSAyOS41ODgxQzMyLjk3NDEgMjkuNjE2MSAzMi41ODYxIDI5LjUyNSAzMi4xOTgxIDI5LjQ4OTlDMzEuMjgwOSAyOS40MTI4IDMwLjgyMjQgMjkuMzU2NyAzMC42MzkgMjkuMzc3N0MzMC40NDg1IDI5LjM5MTggMjkuODk4MiAyOS40NjE5IDI5LjUxNzMgMjkuMjc5NkMyOS40MjU1IDI5LjIzNzUgMjkuMzYyIDI5LjE4ODQgMjkuMzE5NyAyOS4xNDY0QzI5LjEyOTIgMjguOTY0MSAyOS4wODY5IDI4LjczMjcgMjkuMDcyOCAyOC42Mjc1QzI5LjA3OTkgMjguNjkwNiAyOC45NzQgMjguODQ0OSAyOC45NTk5IDI4LjkxNUMyOC45Mzg4IDI5LjAzNDIgMjguOTQ1OCAyOS4xNTM0IDI4Ljk3NCAyOS4yNzI2QzI5LjAyMzQgMjkuNDY4OSAyOS4xMzYzIDI5LjYzNzIgMjkuMjQ5MiAyOS43OTg0QzI5LjMxMjcgMjkuODg5NiAyOS4zNjkxIDI5LjkyNDYgMjkuMzI2OCAzMC4wMTU4QzI5LjI5MTUgMzAuMDk5OSAyOS4xNzE2IDMwLjE5MTEgMjkuMTIyMiAzMC4yNjEyQzI4Ljg5NjQgMzAuNTkwNyAyOC43OTA2IDMwLjk3NjMgMjguNjU2NiAzMS4zNDA5QzI4LjI4OTcgMzIuMzI5NSAyNy41NjMxIDMyLjc2NDIgMjYuNTQwMSAzMi43OTIzQzI2LjM2MzggMzIuNzkyMyAyNi4xODAzIDMyLjgwNjMgMjYuMDExIDMyLjc4NTNDMjUuNzg1MyAzMi43NTAyIDI1LjY3OTQgMzIuODQxNCAyNS41ODA3IDMzLjAzNzdDMjUuMzgzMSAzMy40MzAzIDI1LjE4NTYgMzMuODMgMjQuOTM4NyAzNC4xODc2VjE5LjcxNkMyNC45Mzg3IDE2LjAxNCAyNS43NjQxIDE1Ljc3NTYgMjkuNjMwMSAxNS41MzAyVjE0LjMzMTNIMTUuNDVWMTUuNTMwMkMxOS4zMjMxIDE1Ljc2ODYgMjAuMTQxNCAxNi4wMTQgMjAuMTQxNCAxOS43MTZWMjguNzg4OEMxOC40MTMgMjkuNDMzOCAxNi40MzA2IDI5Ljc5ODQgMTQuMDc0MyAyOS43OTg0SDEwLjkyNzlDMTAuMDEwNyAyOS43OTg0IDkuNDc0NTkgMjkuMjcyNiA5LjQ3NDU5IDI4LjM1NDFWNS4zODQ3NUM5LjQ3NDU5IDEuNjgyNzMgMTAuMyAxLjQ0NDM1IDE0LjE2NiAxLjE5ODk1VjBIMFYxLjE5ODk1QzMuODczMDggMS40MzczNCA0LjY5MTQ0IDEuNjgyNzMgNC42OTE0NCA1LjM4NDc1VjI2LjU4MDJDNC42OTE0NCAzMC4yMzMxIDMuODY2MDMgMzAuNTIwNiAwIDMwLjc2NlYzMS45NjQ5SDIwLjE0ODVWNDIuNjA4MkMyMC4xNDg1IDQ2LjI2MTIgMTkuMzIzMSA0Ni41NDg2IDE1LjQ1NyA0Ni43OTRWNDcuOTkzSDI5LjYzNzJWNDYuNzk0QzI1Ljc2NDEgNDYuNTU1NyAyNC45NDU3IDQ2LjI2ODIgMjQuOTQ1NyA0Mi42MDgyVjM2Ljk0M0MyNS4yNDIgMzYuODU4OSAyNS41MzgzIDM2Ljc5NTggMjUuNzg1MyAzNi41OTk1QzI1Ljg1NTggMzYuNTQzNCAyNS45NDA1IDM2LjQ2NjMgMjUuOTY4NyAzNi4zODkxQzI2LjE4NzQgMzUuODA3MiAyNi42NzQyIDM1LjQ0OTYgMjcuMTExNiAzNS4wNjRDMjcuNDE0OSAzNC43OTc1IDI3LjU5MTMgMzQuNjA4MiAyNy45MDE3IDM0LjQ0N0MyOC4wNjQgMzQuMzYyOCAyOC4zNjczIDM0LjIyOTYgMjkuMjIwOSAzNC4xMTc0QzMwLjI3OTIgMzMuOTg0MiAzMC4yNTggMzQuMTM4NSAzMC43MTY2IDM0LjAwNTNDMzEuMTQ2OSAzMy44NzkxIDMxLjgzMTIgMzMuMzE4MSAzMi4xOTgxIDMzLjExNDhDMzIuNTU3OSAzMi45MTg1IDMyLjk4ODIgMzIuODc2NCAzMy4zODMzIDMyLjkyNTVDMzMuOTQwNiAzMi45OTU2IDM0LjQ4MzggMzMuMjkwMSAzNS4wMiAzMy40NTg0QzM1LjQxNTEgMzMuNTc3NiAzNS44NzM2IDMzLjc1OTkgMzYuMjk2OSAzMy43NDU4QzM2LjQzOCAzMy43NDU4IDM2LjUwODUgMzMuNzMxOCAzNi41MDg1IDMzLjczMThDMzYuNzEzMSAzMy42OTY4IDM2LjkyNDggMzMuNjc1NyAzNy4xMzY0IDMzLjY0MDdDMzcuMjc3NSAzMy42MTI2IDM3LjM4MzMgMzMuNjQwNyAzNy40Mzk4IDMzLjc4MDlDMzcuNTI0NCAzMy45OTEyIDM3LjY3OTYgMzQuMDMzMyAzNy44ODQyIDMzLjk3NzJDMzguNDIwNCAzMy44MTYgMzguOTYzNiAzMy42NjE3IDM5LjQ5OTggMzMuNDkzNEMzOS41MjggMzMuOTA3MSAzOS4yMTA1IDM0LjI1NzcgMzguNzgwMiAzNC4yNTc3QzM4LjYzOTEgMzQuMjU3NyAzOC41Njg2IDM0LjMwNjggMzguNTA1MSAzNC40MTg5QzM4LjMxNDYgMzQuNzU1NSAzOC4xNTk0IDM1LjA5OSAzOC4zNzgxIDM1LjUxOTdDMzguNzg3MiAzNS4zMzA0IDM5LjA5NzcgMzUuMDQyOSAzOS4zNjU3IDM0LjcyNzRDMzkuNTU2MiAzNC41MDMxIDM5Ljc2MDggMzQuMjk5NyA0MC4wMjg5IDM0LjE2NjVDNDAuMTYyOSAzNC4xMDM0IDQwLjIzMzUgMzQuMDEyMyA0MC4yNTQ2IDMzLjg4NjFMNDAuMDc4MyAzMy4zMjUyTDQwLjQzMSAzNC4xMzg1QzQwLjQ4MDQgMzQuMjI5NiA0MC41Mjk4IDM0LjMxMzggNDAuNTc5MiAzNC40MDQ5QzQwLjc4MzggMzQuODExNiA0MC41OTMzIDM1LjI3NDMgNDAuMTYyOSAzNS40MjE2QzQwLjAyODkgMzUuNDYzNiAzOS45Nzk1IDM1LjUzMzcgMzkuOTUxMyAzNS42NkMzOS44NzM3IDM2LjAzODYgMzkuODMxNCAzNi40MTAyIDQwLjE3IDM2LjczOTdDNDAuNTAxNiAzNi40MzEyIDQwLjcwNjIgMzYuMDY2NiA0MC44NjE0IDM1LjY4MUM0MC45NjAxIDM1LjQ0MjYgNDEuMDczIDM1LjIxODIgNDEuMjQyMyAzNS4wMjg5VjQyLjYxNTJDNDEuMjQyMyA0Ni4yNjgyIDQwLjQxNjkgNDYuNTU1NyAzNi41NTA5IDQ2LjgwMTFWNDhINTAuNzMxVjQ2LjgwMTFDNDYuODU3OSA0Ni41NjI3IDQ2LjAzOTYgNDYuMjc1MiA0Ni4wMzk2IDQyLjYxNTJWMTkuNzIzMUM0Ni4wMzk2IDE2LjAyMSA0Ni44NjUgMTUuNzgyNiA1MC43MzEgMTUuNTM3MlpNMjYuNzggMzQuNDI1OUMyNi41MjYgMzQuNzc2NSAyNi4xNjYyIDM1LjA1NyAyNS44NjI5IDM1LjM3MjVDMjUuNzkyMyAzNS40NDk2IDI1LjczNTkgMzUuNTQwOCAyNS42OTM2IDM1LjYzODlDMjUuNTgwNyAzNS45MTk0IDI1LjUxMDEgMzUuOTY4NCAyNS4yMjA5IDM1Ljk0MDRDMjUuMTc4NiAzNS45NDA0IDI1LjExNTEgMzUuOTYxNCAyNS4wODY4IDM1Ljk4OTVDMjUuMDM3NSAzNi4wNDU2IDI0Ljk4ODEgMzYuMTM2NyAyNC45NDU3IDM2LjI0ODlWMzUuMTgzMkMyNS4wMzA0IDM1LjExMzEgMjUuMTA4IDM1LjA0MjkgMjUuMTkyNyAzNC45NzI4QzI1LjQzOTYgMzQuNzU1NSAyNS43MjE4IDM0LjU2NjIgMjUuOTgyOCAzNC4zNTU4QzI2LjMyMTQgMzQuMDgyNCAyNi43MDk0IDMzLjk1NjIgMjcuMTE4NiAzMy45MDcxQzI3LjAxOTkgMzQuMDg5NCAyNi45MDcgMzQuMjY0NyAyNi43ODcgMzQuNDI1OUgyNi43OFoiIGZpbGw9IndoaXRlIi8+CjwvZz4KPGRlZnM+CjxjbGlwUGF0aCBpZD0iY2xpcDBfNzcyXzU2ODUiPgo8cmVjdCB3aWR0aD0iMjEwIiBoZWlnaHQ9IjQ4IiBmaWxsPSJ3aGl0ZSIvPgo8L2NsaXBQYXRoPgo8L2RlZnM+Cjwvc3ZnPgo=" style="position:relative;width:236px;height:auto;display:block;margin-top:-6px"></div>
+<div class="pad stack" style="gap:14px;margin-top:14px"><span class="a-label">Cambridge · Ontario</span>
+<h1 class="a-h1" style="font-size:35px">A new story with every stay.</h1>
+<p style="font-size:14.5px;line-height:1.55;color:var(--app-ink-2)">Check in, open your door, book the spa or the Grand Tasting, and reach the concierge, all from your phone.</p>
+<div style="display:flex;gap:20px;margin:4px 0 2px"><div><b style="font-family:var(--display);font-size:25px;font-weight:500">75</b><div style="font-size:11px;color:var(--app-muted)">acres of forest</div></div><div><b style="font-family:var(--display);font-size:25px;font-weight:500">60</b><div style="font-size:11px;color:var(--app-muted)">rooms &amp; suites</div></div><div><b style="font-family:var(--display);font-size:25px;font-weight:500">1,400</b><div style="font-size:11px;color:var(--app-muted)">wines in the cellar</div></div></div>
+<button class="btn amber" data-go="home" style="margin-top:8px">Add my reservation</button>
+<button class="btn outline" data-go="home">Sign in</button>
+<p style="font-size:11.5px;color:var(--app-muted);text-align:center;margin:2px 0 22px">Use the reservation number from your confirmation email</p></div></div></section>
+<section class="view" data-view="home"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><div style="margin-right:auto"><span class="a-label">Friday, Oct 16</span><h2 class="a-h2" style="margin-top:1px">Good afternoon, Emily</h2></div><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" id="home-body" style="gap:20px;padding-bottom:16px"></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="experiences"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Experiences</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="experiences-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="dining"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Dining</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="dining-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="spa"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Spa & wellness</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="spa-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="events"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">What's on</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="events-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="services"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Room & services</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="services-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="offers"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">Offers</h2><button class="icon-btn" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button></div>
+<div class="app-scroll stack" style="gap:16px;padding-bottom:16px"><div class="pad stack" id="offers-body" style="gap:16px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="slots"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="experiences" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2" id="slots-title">Book</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" id="slots-body" style="gap:18px"></div></div></section>
+<section class="view" data-view="checkout"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="slots" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2">Checkout</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" id="checkout-body" style="gap:16px"></div></div></section>
+<section class="view" data-view="confirmed"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="app-scroll stack" style="gap:18px;padding:14px 0 18px"><div class="pad stack" id="confirmed-body" style="gap:18px;text-align:center"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="pass"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><button class="icon-btn" data-go="confirmed" aria-label="Back"><svg width="18" height="18"><use href="#i-left"/></svg></button><h2 class="a-h2">Reservation pass</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" id="pass-body" style="gap:16px;text-align:center"></div></div><nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="chat"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><div style="margin-right:auto"><h2 class="a-h2">Concierge</h2><span class="a-meta" style="display:flex;align-items:center;gap:5px"><i style="width:7px;height:7px;border-radius:50%;background:#586872;display:inline-block"></i>Online · Langdon Hall</span></div><button class="icon-btn" aria-label="Call"><svg width="18" height="18"><use href="#i-phone"/></svg></button></div>
+<div class="app-scroll stack" id="msgs" style="gap:10px;padding:6px 20px 12px"></div>
+<div class="chips" id="sugg" style="padding-bottom:6px"></div>
+<form id="chat-form" style="flex:none;display:flex;gap:9px;padding:6px 16px 12px"><input id="chat-inp" autocomplete="off" placeholder="Ask anything…" style="flex:1;min-width:0;border:1px solid var(--app-line);background:var(--app-surface);border-radius:14px;padding:11px 14px;font:inherit;font-size:13.5px;color:var(--app-ink);outline:none"><button class="icon-btn" style="background:var(--app-pine);color:#fff;border:0;width:44px;height:44px;border-radius:14px" aria-label="Send"><svg width="18" height="18"><use href="#i-send"/></svg></button></form>
+<nav class="tabbar" data-tabbar></nav></section>
+<section class="view" data-view="stay"><div class="statusbar"><span>4:12</span><span class="sb-right"><i class="sb-bar" style="height:5px"></i><i class="sb-bar" style="height:7px"></i><i class="sb-bar" style="height:9px"></i><i class="sb-bar" style="height:11px"></i><i class="sb-batt"></i></span></div>
+<div class="appbar"><h2 class="a-h2">My stay</h2></div>
+<div class="app-scroll stack" style="gap:18px;padding-bottom:16px"><div class="pad stack" id="stay-body" style="gap:18px"></div></div><nav class="tabbar" data-tabbar></nav></section>
+</div></div></div><div class="stage-hint"><span class="dot"></span>Everything is clickable: book a table, the spa or the Grand Tasting, check out, message the concierge. Arrow keys switch screens.</div></main>
+<aside class="notes"><span class="eyebrow" id="n-group"></span><h2 id="n-title"></h2><p id="n-lede" style="font-size:13.5px;color:var(--muted);line-height:1.5"></p><ul class="n-list" id="n-list"></ul>
+<div class="n-why"><span class="eyebrow">Why it matters for Langdon Hall</span><p id="n-why"></p></div>
+<div class="n-nav"><button id="prev"><svg width="15" height="15"><use href="#i-left"/></svg>Previous</button><button id="next">Next<svg width="15" height="15"><use href="#i-right"/></svg></button></div>
+<p class="n-foot">Concept prototype, not a live product. Availability, times and guest details are illustrative. Menus, prices, hours, spa treatments, activities, packages and policies are taken from the public Langdon Hall website; check-in/out and tasting-menu seating times are placeholders. In production this connects to the hotel's reservation, table, spa and billing systems.</p></aside></div>
+<script>(function(){
+"use strict";
+var $=function(s){return document.querySelector(s)};
+function esc(s){return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
+function svg(i,w){return '<svg width="'+(w||18)+'" height="'+(w||18)+'"><use href="#i-'+i+'"/></svg>'}
+
+var ORDER=["welcome","home","experiences","dining","spa","events","slots","checkout","confirmed","pass","chat","services","offers","stay"];
+var NOTES={
+welcome:{group:"Arrival",title:"Welcome",lede:"The first ten seconds, in Langdon Hall's own colours, logo and voice.",list:["The line is the hotel's own: 'A new story with every stay'.","Real facts up front: 75 acres of Carolinian forest, 60 rooms and suites, more than 1,400 wines in the cellar."],why:"A guest app is part of the brand. For a Relais & Châteaux country house it has to feel as considered as the house itself."},
+home:{group:"Arrival",title:"Today",lede:"One calm screen for arrival day.",list:["Digital key and room details first.","Live facts guests ask about: the complimentary 4:00 PM wine tasting, Saturday's Grand Tasting Menu.","Today's plan mixes confirmed bookings with a suggestion."],why:"Guests who know what is on today use more of the estate, and call reception less."},
+experiences:{group:"Discover",title:"Experiences",lede:"The real programme, with its real rules and seasons.",list:["Complimentary wine tasting with the sommelier at 4 PM (guests 19+, same-day cut-off 3 PM) and the daily garden tour at 9:30 AM, which becomes a greenhouse tour after mid-October.","Seasonal things are shown honestly: the outdoor pool and tennis are closed until May; yoga and archery need 7 days' notice.","Today these are phone calls and sign-up sheets."],why:"The rules that live in the fine print become the app's logic, so guests only see what they can actually do."},
+dining:{group:"Discover",title:"Dining",lede:"The Dining Room, Wilks Bar and the Grand Tasting Menu in one place.",list:["Today tables and the Grand Tasting are booked by phone (519-740-2100). Here it is a few taps.","Real hours: breakfast 7:00 – 10:15, lunch 12:00 – 2:15, dinner 5:00 – 9:00 daily.","Real prices: Discovery Lunch $95, Discovery Dinner $225, Grand Tasting $295 with two wine pairings."],why:"Dining is where a stay is won. Reservations by phone are easy to lose; in the app they are instant and visible to the team."},
+spa:{group:"Discover",title:"Spa & wellness",lede:"Valmont facials, massages and the day-of-week pricing.",list:["Treatments use the spa's real menu and the real Monday–Thursday vs Friday–Sunday prices.","Opening hours differ by day (Thursday and Friday until 8 PM), and the slots follow.","The 48-hour cancellation rule, the age rules and the 18% gratuity for overnight guests are shown before booking."],why:"Spa slots are perishable inventory. Easy booking fills the quiet hours."},
+events:{group:"Discover",title:"What's on",lede:"Events and holiday packages.",list:["Sold-out events show a waitlist action instead of a dead end.","Christmas Eve, Christmas Day and New Year's Eve come straight from the packages page, with their minimum-stay and deposit rules."],why:"Events sell out early and are promoted late. A push to people already in the house is the best channel."},
+slots:{group:"Book without calling",title:"Pick a time",lede:"Fully working: day, time, guests and options, with each experience's own rules.",list:["The Grand Tasting Menu opens only Friday to Sunday, for 1 to 4 guests, with the two real wine pairings.","Spa prices switch between weekday and weekend rates.","Complimentary experiences skip payment."],why:"The rules become the app's logic, so guests cannot book something that is not possible."},
+checkout:{group:"Book without calling",title:"Checkout",lede:"Charge to the room or pay by wallet.",list:["Room charge by default.","Taxes and gratuities are shown the way the website states them."],why:"Frictionless payment turns browsing into booking."},
+confirmed:{group:"Book without calling",title:"Confirmed",lede:"The confirmation, built from the booking just made.",list:["Reservation number, time, party size and location.","One-tap reminder."],why:"Fewer no-shows at the table and in the spa."},
+pass:{group:"Book without calling",title:"Reservation pass",lede:"A QR code for the host to scan.",list:["No paper vouchers."],why:"A clean record of who is where, and a faster welcome at the door."},
+chat:{group:"During your stay",title:"Concierge",lede:"The concierge in the guest's pocket. Try 'pets', 'spa' or 'pool'.",list:["Answers use the hotel's real policies: pets ($50 per pet, Cloister terrace rooms), spa age rules, wine tasting 19+, smart attire.","Anything it cannot answer goes to a person."],why:"Reception handles fewer repeat questions, and every request is recorded."},
+services:{group:"During your stay",title:"Room & services",lede:"Everything promised in the room, one tap away.",list:["Hypo-allergenic bedding, dry cleaning, bike and snowshoe rental, a Lexus test drive and car detailing before check-out: all from the amenities page.","Staff see the request instantly."],why:"Small services shape how a stay feels, and they are easy to miss when you have to ask."},
+offers:{group:"During your stay",title:"Offers",lede:"The hotel's real packages and promotions.",list:["Country Retreat, Luxurious Escape, the Grand Retreat, Stay Longer (10% / 15%) and Suite Savings (20%).","Room add-ons need 72 hours' notice, which the app can enforce."],why:"A guest who sees the next stay during this one books it before leaving."},
+stay:{group:"During your stay",title:"My stay",lede:"Reservation, charges and contacts.",list:["Room charges update as bookings are charged to the room.","Check-in and check-out times, breakfast, spa contact, express check-out."],why:"Fewer calls to reception and a smoother check-out."}
+};
+var TABS=[
+{id:"home",label:"Today",icon:"i-home",match:["home"]},
+{id:"experiences",label:"Discover",icon:"i-compass",match:["experiences","dining","spa","events","slots","checkout","confirmed","pass"]},
+{id:"chat",label:"Concierge",icon:"i-chat",match:["chat"]},
+{id:"services",label:"Services",icon:"i-star",match:["services","offers"]},
+{id:"stay",label:"My stay",icon:"i-user",match:["stay"]}];
+document.querySelectorAll("[data-tabbar]").forEach(function(bar){
+bar.innerHTML=TABS.map(function(t){return '<button class="tab" data-go="'+t.id+'" data-tab="'+t.id+'"><svg><use href="#'+t.icon+'"/></svg>'+t.label+'</button>';}).join("")});
+
+var DAYS=[["Fri","Oct",16],["Sat","Oct",17],["Sun","Oct",18],["Mon","Oct",19]];
+var WEEKEND=[1,1,1,0];
+function spaHours(d){return d===0?["9:00 AM","11:00 AM","1:00 PM","3:00 PM","5:00 PM","6:30 PM"]:["9:00 AM","11:00 AM","1:00 PM","3:00 PM","4:30 PM"]}
+var DINNER=["5:00 PM","6:30 PM","7:30 PM","8:30 PM"],LUNCH=["12:00 PM","1:00 PM","2:00 PM"];
+var ACTS={
+table:{name:"Restaurant table",defHour:"7:30 PM",short:"table",price:0,unit:"guest",durs:[90],mult:{90:1},cap:8,hours:DINNER,
+ vars:[
+ ["Dining Room · dinner",0,DINNER,"The Dining Room overlooks the Lily Pond and the Carolinian forest. Dinner daily 5:00 – 9:00 PM. Smart attire is encouraged."],
+ ["Dining Room · lunch",0,LUNCH,"Lunch daily 12:00 – 2:15 PM, à la carte. Smart attire is encouraged."],
+ ["Dining Room · breakfast",0,["7:00 AM","8:30 AM","10:00 AM"],"Fresh Country Breakfast daily 7:00 – 10:15 AM: $55 per person plus taxes and gratuities, with accompaniments and beverages. Included in packages."],
+ ["Wilks Bar",0,["12:00 PM","1:30 PM","5:00 PM","7:30 PM"],"A casual meal, a pre-dinner cocktail or a nightcap, redesigned with Sarah Richardson. Lunch 12:00 – 2:15 PM, dinner 5:00 – 9:00 PM."]
+ ],addons:[["Window table request",0],["Celebration note to the team",0]],cls:"t-dining",maxQty:8,note:"No payment now."},
+discovery:{name:"Discovery tasting menu",defHour:"6:30 PM",short:"the Discovery menu",unit:"guest",price:0,durs:[120],mult:{120:1},cap:8,hours:DINNER,
+ vars:[["Discovery Dinner",0,DINNER,"Highlights of the à la carte dinner menu as a tasting menu. $225 per person plus taxes and gratuities.",[225,225]],["Discovery Lunch",0,LUNCH,"Highlights of the à la carte lunch menu as a tasting menu. $95 per person plus taxes and gratuities.",[95,95]]],addons:[],cls:"t-wilks",maxQty:6,note:""},
+grand:{name:"The Grand Tasting Menu",defHour:"7:30 PM",short:"the Grand Tasting",price:295,unit:"guest",qty:"Guests",minQty:1,maxQty:4,days:[0,1,2],durs:[180],mult:{180:1},cap:6,hours:["6:00 PM","7:30 PM"],
+ vars:[["No pairing",0],["The Globetrotter pairing",160],["World Classics pairing",300]],addons:[],cls:"t-grand",
+ note:"Nine courses by Executive Chef Jason Bangerter, $295 per person plus taxes and gratuities. Friday to Sunday evenings, parties of 1 to 4, no substitutions. Seating times are illustrative."},
+tasting:{name:"Sommelier wine tasting",defHour:"4:00 PM",short:"wine tasting",price:0,unit:"guest",qty:"Guests",minQty:1,maxQty:8,durs:[60],mult:{60:1},cap:10,hours:["4:00 PM"],vars:null,addons:[],cls:"t-wine",note:"Complimentary, daily at 4:00 PM, for overnight guests aged 19 and over. Three wines and a new topic each week. Same-day cut-off 3:00 PM."},
+garden:{name:"Garden & greenhouse tour",defHour:"9:30 AM",short:"garden tour",price:0,unit:"guest",qty:"Guests",minQty:1,maxQty:8,durs:[60],mult:{60:1},cap:12,hours:["9:30 AM"],vars:null,addons:[],cls:"t-garden",note:"Complimentary, daily at 9:30 AM with our gardener. Outdoor garden tours run mid-May to mid-October; after that it is a greenhouse tour."},
+spa:{name:"Spa treatment",defHour:"3:00 PM",short:"spa treatment",price:0,unit:"guest",qty:"Guests",minQty:1,maxQty:2,grat:.18,durs:[60],mult:{60:1},cap:4,hoursFn:spaHours,hours:spaHours(1),
+ vars:[
+ ["Relaxation Swedish massage · 60 min",0,null,null,[175,195]],
+ ["Relaxation Swedish massage · 90 min",0,null,null,[260,280]],
+ ["Hot stone massage · 90 min",0,null,null,[265,285]],
+ ["Hot stem Thai massage · 90 min",0,null,null,[265,285]],
+ ["Dry brush massage · 60 min",0,null,null,[185,205]],
+ ["Luminosity of Ice facial · 75 min",0,null,null,[385,405]],
+ ["Purity of the Alps facial · 60 min",0,null,null,[290,310]]],
+ addons:[["Valmont collagen eye mask (facials)",85]],cls:"t-spa",
+ note:"Monday–Thursday and Friday–Sunday prices differ. Book two guests for a couples massage. Overnight guests: an automatic 18% gratuity is added. 48 hours' notice to avoid a $100 cancellation fee. Open Sat–Wed 9–6, Thu & Fri 9–8."}
+};
+var B={act:"table",day:0,hour:"7:30 PM",guests:2,dur:90,vari:0,addons:{},pay:"room",paid:false};
+var extra=[],charged=0;
+function money(n){return n===0?"No charge":"$"+n.toLocaleString("en-CA",{minimumFractionDigits:n%1?2:0,maximumFractionDigits:2})}
+function qtyStr(a,n){return n+" "+(n===1?"guest":"guests")}
+function dayLabelFor(i){var d=DAYS[i];return d[0]+", "+d[1]+" "+d[2]}
+function dayLabel(){return dayLabelFor(B.day)}
+function hoursFor(a){var v=a.vars&&a.vars[B.vari];if(v&&v[2])return v[2];return a.hoursFn?a.hoursFn(B.day):a.hours}
+function spots(a,day,h){var s=0,k=a+day+h;for(var i=0;i<k.length;i++)s=(s*31+k.charCodeAt(i))>>>0;var c=ACTS[a].cap;var taken=s%(c+2);return Math.max(1,c-Math.min(taken,c-1))}
+function perPerson(a){var v=a.vars&&a.vars[B.vari];if(v&&v[4])return v[4][WEEKEND[B.day]];return a.price+(v?v[1]:0)}
+function sub(){var a=ACTS[B.act],ex=0;Object.keys(B.addons).forEach(function(i){if(B.addons[i])ex+=a.addons[i][1]*B.guests});return {base:perPerson(a)*B.guests,ex:ex}}
+function gratOf(a){var s=sub();return a.grat?Math.round((s.base+s.ex)*a.grat*100)/100:0}
+function total(){var a=ACTS[B.act],s=sub();return Math.round((s.base+s.ex+gratOf(a))*100)/100}
+function noteOf(a){var v=a.vars&&a.vars[B.vari];return (v&&v[3])||a.note}
+function setAct(k,v){var a=ACTS[k];B.act=k;B.dur=a.durs[0];B.vari=v||0;B.addons={};B.day=a.days?a.days[0]:0;var hs=hoursFor(a);B.hour=(a.defHour&&hs.indexOf(a.defHour)>-1)?a.defHour:hs[Math.min(1,hs.length-1)];B.guests=a.minQty||2;if(B.guests>(a.maxQty||8))B.guests=a.maxQty}
+function pill(t,c){return '<span class="pill'+(c?" "+c:"")+'">'+t+'</span>'}
+function rowH(cls,title,meta,pl,attr){return '<button class="row" '+attr+'><span class="thumb '+cls+'" style="width:70px;height:62px"></span><span class="row-body"><span class="t">'+title+'</span><span class="a-meta">'+meta+'</span><span>'+pl+'</span></span><svg width="16" height="16" style="color:var(--app-muted)"><use href="#i-right"/></svg></button>'}
+function heroH(cls,title,sub,label,h){return '<div class="thumb '+cls+'" style="width:100%;height:'+(h||124)+'px;display:block"><span style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;text-align:left;color:#fff;background:linear-gradient(180deg,rgba(0,0,0,0) 25%,rgba(0,0,0,.42))">'+(label?'<span class="a-label" style="color:rgba(255,255,255,.88)">'+label+'</span>':'')+'<span style="font-family:var(--display);font-size:26px;font-weight:500;letter-spacing:-.005em;line-height:1.08">'+title+'</span><span style="font-size:12px;color:rgba(255,255,255,.92);margin-top:2px">'+sub+'</span></span></div>'}
+
+function renderHome(){var h='';
+h+='<div class="card hero-pine" style="padding:15px;border:0;margin:0 20px;flex:none"><svg class="deco" viewBox="0 0 380 120" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#97855C" stroke-width="1" opacity=".4"><path d="M-10 96c70-46 120 16 190-22s120 10 210-30"/><path d="M-10 114c70-46 120 16 190-22s120 10 210-30"/></g></svg>'+
+'<div style="position:relative"><span class="a-label" style="color:rgba(255,255,255,.65)">Your stay</span><div style="font-family:var(--display);font-size:27px;font-weight:500;letter-spacing:-.005em;margin-top:3px;line-height:1.1">Langdon Hall</div><div style="font-size:12px;color:rgba(255,255,255,.78);margin-top:3px">Cloister Room · Cambridge, Ontario</div><div style="font-size:12px;color:rgba(255,255,255,.78)">Oct 16 – 19 · 2 adults</div>'+
+'<div style="display:flex;gap:8px;margin-top:13px"><button class="btn amber sm" style="flex:1" data-toast="Digital key sent to your phone">Unlock door</button><button class="btn sm" style="flex:1;background:rgba(255,255,255,.16)" data-go="stay">Stay details</button></div></div></div>';
+h+='<div class="card" style="padding:12px 14px;margin:0 20px;flex:none"><div style="display:grid;grid-template-columns:repeat(3,1fr);text-align:center;gap:6px">'+[["4 PM","Wine tasting"],["12 km","Trails"],["5 Diamond","Dining"]].map(function(c){return '<div><b style="display:block;font-family:var(--display);font-size:21px;font-weight:500;color:var(--app-ink)">'+c[0]+'</b><span class="a-label">'+c[1]+'</span></div>'}).join("")+'</div></div>';
+h+='<div style="margin:0 20px;flex:none"><div class="sec-head" style="margin:0 0 11px"><h3 class="a-h3">Your plan today</h3><button class="link" data-go="stay">Stay details</button></div><div class="timeline">'+
+'<div class="tl now"><span class="t">3:00 PM</span><div class="a-h3">Check-in · room ready, digital key active</div><span class="a-meta">Cloister Room · wood-burning fireplace</span></div>'+
+'<div class="tl"><span class="t">4:00 PM</span><div class="a-h3">Wine tasting with the sommelier</div><span class="a-meta">Complimentary · Confirmed</span></div>'+
+'<div class="tl"><span class="t">7:30 PM</span><div class="a-h3">Dinner in the Dining Room</div><span class="a-meta">Table for 2 · Confirmed</span></div>'+
+'<div class="tl sug"><span class="t">Suggested</span><div class="a-h3">Tomorrow evening: the Grand Tasting Menu</div><button class="pill sand" data-book="grand" style="margin-top:4px">Reserve · $295 per person</button></div></div></div>';
+h+='<div style="margin:0 20px;flex:none"><div class="sec-head" style="margin:0 0 11px"><h3 class="a-h3">Quick actions</h3></div><div class="qgrid">'+
+'<button class="qa" data-go="dining"><i>'+svg("fork")+'</i>Book a table</button><button class="qa" data-go="spa"><i>'+svg("drop")+'</i>Spa &amp; wellness</button><button class="qa" data-go="experiences"><i>'+svg("compass")+'</i>Experiences</button><button class="qa" data-go="chat"><i>'+svg("chat")+'</i>Message the concierge</button></div></div>';
+$("#home-body").innerHTML=h}
+
+function renderExperiences(){var h=heroH("t-house","Experiences","Wine, gardens and 12 km of forest trails","Langdon Hall");
+h+='<div class="stack rowlist" style="gap:9px">'+
+rowH("t-wine","Wine tasting with the sommelier","Daily 4:00 PM · overnight guests 19+",pill("Complimentary","sand"),'data-book="tasting"')+
+rowH("t-garden","Garden &amp; greenhouse tour","Daily 9:30 AM with our gardener",pill("Complimentary","sand"),'data-book="garden"')+
+rowH("t-spa","The Spa","Valmont facials, massages and rituals",pill("From $175"),'data-go="spa"')+
+rowH("t-trail","Trails, bikes &amp; snowshoes","12 km of walking trails · deer and the duck house",pill("Complimentary rental","sand"),'data-toast="Request sent: Bike or snowshoe rental"')+'</div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">In season or by request</span>'+
+[["Outdoor pool","Open May to Thanksgiving · back next season",pill("Closed for the season")],["Tennis &amp; pickleball","Available May to late September",pill("Closed for the season")],["Archery lessons","$350 + HST for up to six · 7 days' notice, May to October",pill("Out of season")],["Private yoga","$150 + HST for up to ten · 7 days' notice, overnight guests",pill("Enquire","sand")]].map(function(r){return '<div class="hrow" style="align-items:center"><div style="flex:1"><b>'+r[0]+'</b><span class="a-meta" style="display:block;font-weight:500">'+r[1]+'</span></div>'+r[2]+'</div>'}).join("")+'</div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">In the house</span><div class="list-item">'+svg("check")+'Sitting rooms, conservatories and the library</div><div class="list-item">'+svg("check")+'Billiards room and games room</div><div class="list-item">'+svg("check")+'Exercise room, whirlpool and sauna at the spa</div><div class="list-item">'+svg("check")+'Theatre outings to Stratford and Drayton</div><button class="list-item" data-go="chat">'+svg("chat")+'Ask the concierge about this weekend<span class="v">›</span></button></div>';
+$("#experiences-body").innerHTML=h}
+
+function renderDining(){var h=heroH("t-dining","The Dining Room","Executive Chef Jason Bangerter · Five-Diamond cuisine","Dining");
+h+='<div class="stack rowlist" style="gap:9px">'+
+rowH("t-grand","The Grand Tasting Menu","Nine courses · Fri–Sun evenings · 1 to 4 guests",pill("$295 per person","clay"),'data-book="grand"')+
+rowH("t-dining","Dining Room · dinner","Daily 5:00 – 9:00 PM · overlooks the Lily Pond",pill("Table","sand"),'data-res="0"')+
+rowH("t-dining","Dining Room · lunch","Daily 12:00 – 2:15 PM",pill("Table","sand"),'data-res="1"')+
+rowH("t-dining","Country Breakfast","Daily 7:00 – 10:15 AM",pill("$55 per person","sand"),'data-res="2"')+
+rowH("t-wilks","Wilks Bar","Casual lunch, cocktails and nightcaps",pill("Table","sand"),'data-res="3"')+
+rowH("t-wilks","Discovery tasting menu","Dinner $225 · lunch $95",pill("Book"),'data-book="discovery"')+'</div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">The Wine Cellar</span><div class="hrow"><b>Over 1,400 wines</b><span class="h">From around the world</span></div><div class="hrow"><b>Head Sommelier</b><span class="h">Faye MacLachlan</span></div><div class="hrow"><b>Pairings</b><span class="h">Globetrotter $160 · World Classics $300</span></div></div>';
+h+='<div class="quote">We create dishes with purpose, embraced with a story behind each relationship.<span class="who">Langdon Hall</span></div>';
+$("#dining-body").innerHTML=h}
+
+function renderSpa(){var h=heroH("t-spa","The Spa","One of the top 25 spas in Canada","Spa & wellness");
+h+='<p style="font-size:13.5px;line-height:1.55;color:var(--app-ink-2)">An intimate, award-winning spa with Valmont products, led by Spa Director Julie Simcox. Massages, wraps, scrubs and facials for overnight and outside guests, seven days a week.</p><button class="btn amber" data-book="spa">Book a treatment</button>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Treatments · Mon–Thu | Fri–Sun</span><div class="hrow"><b>Swedish massage, 60 min</b><span class="h">$175 | $195</span></div><div class="hrow"><b>Hot stone, 90 min</b><span class="h">$265 | $285</span></div><div class="hrow"><b>Hot stem Thai, 90 min</b><span class="h">$265 | $285</span></div><div class="hrow"><b>Luminosity of Ice facial, 75 min</b><span class="h">$385 | $405</span></div><div class="hrow"><b>Purity of the Alps facial, 60 min</b><span class="h">$290 | $310</span></div></div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Good to know</span><div class="hrow"><b>Sat – Wed</b><span class="h">9:00 AM – 6:00 PM</span></div><div class="hrow"><b>Thu &amp; Fri</b><span class="h">9:00 AM – 8:00 PM</span></div><div class="hrow"><b>Facials</b><span class="h">Guests 14+</span></div><div class="hrow"><b>Massage</b><span class="h">Guests 16+</span></div><div class="hrow"><b>Cancellation</b><span class="h">48 h · else $100</span></div><div class="hrow"><b>Spa direct line</b><span class="h">519-624-3220</span></div></div>';
+h+='<div class="card" style="display:flex;gap:12px;align-items:center;background:var(--app-sand);border-color:transparent"><div style="flex:1"><span class="a-label">Spa terrace &amp; trails</span><div class="a-h3" style="margin-top:2px">Spa visitors also enjoy the terrace, 12 km of trails and the gardens</div></div></div>';
+$("#spa-body").innerHTML=h}
+
+function renderEvents(){var h=heroH("t-event","What's on","Events and holiday packages","Events");
+var ev=[["t-event","Tee Time for Murder","Fri 30 Oct · immersive murder mystery dinner · sold out",pill("Waitlist","sand"),'data-toast="Added to the waitlist: Murder Mystery Dinner"'],
+["t-gift","Christmas Eve &amp; Christmas Day","Dec 24 &amp; 25 · two-night minimum · carolers and festive dinner",pill("Package"),'data-toast="Request sent: Christmas package"'],
+["t-grand","New Year\'s Eve","Thu Dec 31 · reception 6:30 PM, tasting menu 7:30 PM, live music",pill("Package only"),'data-toast="Request sent: New Year\'s Eve package"'],
+["t-dining","Stratford Festival","Matinee or evening performance, a scenic drive away",pill("Plan an outing","sand"),'data-toast="Request sent: Stratford Festival"'],
+["t-dining","Drayton Festival Theatre","In Cambridge or St. Jacobs",pill("Plan an outing","sand"),'data-toast="Request sent: Drayton Festival Theatre"']];
+h+='<div class="stack rowlist" style="gap:9px">'+ev.map(function(e){return rowH(e[0],e[1],e[2],e[3],e[4])}).join("")+'</div>';
+h+='<div class="quote">New Year\'s Eve is available exclusively as a package. A deposit is collected 30 days before arrival.<span class="who">Langdon Hall</span></div>';
+$("#events-body").innerHTML=h}
+
+function renderSlots(){var a=ACTS[B.act];$("#slots-title").textContent="Book "+a.short;
+var hs=hoursFor(a);if(hs.indexOf(B.hour)<0)B.hour=hs[Math.min(1,hs.length-1)];
+var h='<div class="week" style="width:100%">'+DAYS.map(function(d,i){var off=a.days&&a.days.indexOf(i)<0;return '<button class="day" data-bk-day="'+i+'" aria-pressed="'+(i===B.day)+'" '+(off?'disabled style="opacity:.35"':'')+'>'+d[0]+'<b>'+d[2]+'</b></button>'}).join("")+'</div>';
+var note=noteOf(a);
+if(note)h+='<div class="quote">'+note+'<span class="who">Langdon Hall</span></div>';
+if(a.vars)h+='<div><span class="a-label">'+(B.act==="table"?"Where":B.act==="spa"?"Treatment":"Option")+'</span><div class="chips" style="padding:9px 0 0;flex-wrap:wrap">'+a.vars.map(function(v,i){return '<button class="chip" data-bk-var="'+i+'" aria-pressed="'+(i===B.vari)+'">'+v[0]+'</button>'}).join("")+'</div></div>';
+h+='<div><span class="a-label">Pick a time</span><div class="slotgrid" style="margin-top:9px">'+hs.map(function(t){var s=spots(B.act,B.day,t);return '<button class="slotbtn" data-bk-hour="'+t+'" aria-pressed="'+(t===B.hour)+'">'+t+'<small>'+s+" "+(s===1?"spot":"spots")+'</small></button>'}).join("")+'</div></div>';
+var pp=perPerson(a),min=a.minQty||1,priceLine=pp?"$"+pp+" per guest"+(a.grat?" + 18% gratuity":""):"No charge";
+h+='<div class="card" style="display:flex;align-items:center;gap:12px"><div style="flex:1"><div class="a-h3">'+(a.qty||"Guests")+'</div><span class="a-meta">'+priceLine+(min>1?" · min. "+min:"")+'</span></div><div class="stepper"><button data-step="-1" aria-label="Fewer">−</button><b>'+B.guests+'</b><button data-step="1" aria-label="More">+</button></div></div>';
+if(a.addons.length)h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Add extras</span>'+a.addons.map(function(x,i){return '<div class="list-item"><span>'+x[0]+'<span class="a-meta" style="display:block">'+(x[1]?money(x[1])+" per guest":"Included")+'</span></span><button class="switch" data-bk-addon="'+i+'" aria-pressed="'+(!!B.addons[i])+'" aria-label="'+x[0]+'"></button></div>'}).join("")+'</div>';
+var s=sub(),g=gratOf(a),tot=total();
+h+='<div class="card stack" style="gap:8px"><div style="display:flex"><span class="a-meta">'+esc(whatName(a))+" × "+B.guests+'</span><b style="margin-left:auto;font-size:13.5px">'+money(s.base)+'</b></div>'+
+Object.keys(B.addons).filter(function(i){return B.addons[i]&&a.addons[i][1]}).map(function(i){return '<div style="display:flex"><span class="a-meta">'+a.addons[i][0]+' × '+B.guests+'</span><b style="margin-left:auto;font-size:13.5px">'+money(a.addons[i][1]*B.guests)+'</b></div>'}).join("")+
+(g?'<div style="display:flex"><span class="a-meta">Gratuity 18%</span><b style="margin-left:auto;font-size:13.5px">'+money(g)+'</b></div>':'')+
+'<div style="display:flex;border-top:1px solid var(--app-line);padding-top:9px"><b>Total</b><b style="margin-left:auto;font-family:var(--display);font-size:23px;font-weight:500">'+money(tot)+'</b></div>'+(tot?'<span class="a-meta">Plus taxes'+(a.grat?'':' and gratuities')+'</span>':'')+'</div>';
+h+='<button class="btn amber" data-go="checkout">Continue · '+dayLabel()+', '+B.hour+'</button>';
+$("#slots-body").innerHTML=h}
+
+function whatName(a){return a.vars?(B.act==="table"||B.act==="discovery"||B.act==="spa"?a.vars[B.vari][0]:a.name+" · "+a.vars[B.vari][0]):a.name}
+function nameFor(x){var a=ACTS[x.act];return a.vars?(x.act==="table"||x.act==="discovery"||x.act==="spa"?a.vars[x.v][0]:a.name+" · "+a.vars[x.v][0]):a.name}
+function renderCheckout(){var a=ACTS[B.act],tot=total();
+var opts=[["room","Charge to Room","Settled at check-out","i-key"],["wallet","Apple Pay","Face ID","i-card"],["card","Visa •••• 4242","Saved card","i-card"]];
+$("#checkout-body").innerHTML='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="thumb '+a.cls+'" style="width:54px;height:54px"></span><div><div class="a-h3">'+esc(whatName(a))+'</div><span class="a-meta">'+dayLabel()+' · '+B.hour+' · '+qtyStr(a,B.guests)+'</span></div></div>'+
+(tot>0?'<span class="a-label">Pay with</span><div class="stack" style="gap:9px">'+opts.map(function(o){return '<button class="payopt" data-pay="'+o[0]+'" aria-pressed="'+(B.pay===o[0])+'"><span class="radio">'+svg("check",12)+'</span>'+svg(o[3].slice(2),20)+'<span style="flex:1">'+o[1]+'<span class="a-meta" style="display:block;font-weight:500">'+o[2]+'</span></span></button>'}).join("")+'</div>':'<div class="card" style="background:var(--app-mint);border-color:transparent"><b>No charge</b><span class="a-meta" style="display:block">'+(B.act==="table"?"Pay at the table. Nothing is charged now.":"Complimentary for overnight guests.")+'</span></div>')+
+'<div class="card" style="display:flex"><b>Total</b><b style="margin-left:auto;font-family:var(--display);font-size:23px;font-weight:500">'+money(tot)+'</b></div>'+(tot?'<p class="a-meta" style="text-align:center">Plus applicable taxes'+(a.grat?'.':' and gratuities.')+'</p>':'')+
+'<p class="a-meta" style="text-align:center">'+(B.act==="spa"?"48 hours' notice to avoid a $100 cancellation fee.":B.act==="grand"?"Reservations are required in advance; no substitutions or modifications.":"Free cancellation up to 24 h before.")+'</p><button class="btn amber" id="confirm-pay">'+(tot>0?"Confirm &amp; pay "+money(tot):"Confirm booking")+'</button>'}
+
+function confirmBooking(){var tot=total();if(B.pay==="room")charged+=tot;extra=[{d:B.day,h:B.hour,act:B.act,v:B.vari,g:B.guests}].concat(extra);B.paid=true;go("confirmed")}
+function renderConfirmed(){var a=ACTS[B.act];
+$("#confirmed-body").innerHTML='<div class="burst" style="margin-top:6px">'+svg("check",34)+'</div><div><h1 class="a-h1">You\'re booked.</h1><p class="a-meta" style="margin-top:5px">Reservation LH-70215 · also sent to your email</p></div>'+
+'<div class="card stack" style="gap:10px;text-align:left"><span class="a-label">'+esc(whatName(a))+'</span><div style="display:flex;gap:12px;align-items:center"><span class="thumb '+a.cls+'" style="width:54px;height:54px"></span><div><div class="a-h3">'+dayLabel()+' · '+B.hour+'</div><span class="a-meta">'+qtyStr(a,B.guests)+'</span></div></div>'+
+'<div class="list-item" style="padding:9px 0">'+svg("pin")+'Langdon Hall, 1 Langdon Drive<span class="v">Directions</span></div><div class="list-item" style="padding:9px 0">'+svg("bell")+'Remind me 1 hour before<button class="switch" data-switch aria-pressed="true" aria-label="Reminder"></button></div></div>'+
+'<button class="btn" data-go="pass">'+svg("qr")+'Show reservation pass</button><button class="btn outline" data-go="stay">See my stay</button>'}
+function qr(){var n=25,s=7,cells="",seed=70215;function r(){seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff}
+function inF(x,y){return (x<8&&y<8)||(x>=n-8&&y<8)||(x<8&&y>=n-8)}
+function finder(ox,oy){var o="";for(var i=0;i<7;i++)for(var j=0;j<7;j++){var e=i===0||j===0||i===6||j===6,c=i>=2&&i<=4&&j>=2&&j<=4;if(e||c)o+='<rect x="'+((ox+i)*s)+'" y="'+((oy+j)*s)+'" width="'+s+'" height="'+s+'"/>'}return o}
+for(var x=0;x<n;x++)for(var y=0;y<n;y++){if(inF(x,y))continue;if(r()>.52)cells+='<rect x="'+(x*s)+'" y="'+(y*s)+'" width="'+s+'" height="'+s+'"/>'}
+return '<svg viewBox="0 0 '+(n*s)+' '+(n*s)+'" width="200" height="200" fill="#1B1D28" shape-rendering="crispEdges" aria-label="Reservation pass QR code">'+cells+finder(0,0)+finder(n-7,0)+finder(0,n-7)+'</svg>'}
+function renderPass(){var a=ACTS[B.act];$("#pass-body").innerHTML='<div class="qrbox">'+qr()+'</div><div><div class="a-h2">'+esc(whatName(a))+'</div><span class="a-meta">'+dayLabel()+' · '+B.hour+' · '+qtyStr(a,B.guests)+'</span></div><p class="a-meta">Show this to your host. They scan it, no paper vouchers.</p><button class="btn outline">'+svg("share",16)+'Send to a guest in my party</button>'}
+
+function renderServices(){var req=[["Hypo-allergenic bedding","Available by request"],["Dry cleaning","Collected from your room"],["Bike or snowshoe rental","Complimentary, by request"],["Late check-out","Subject to availability"],["Lexus RX 450h+ test drive","Ask and we will arrange it"],["Car detailing before check-out","Langdon Hall x Duo Detailing"],["Pet bowls","Water and food bowls for pets"]];
+var h=heroH("t-house","Your room","Cloister Room · 575 sq ft · wood-burning fireplace","Langdon Hall");
+h+='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="icon-btn" style="background:var(--app-mint)">'+svg("phone")+'</span><div style="flex:1"><div class="a-h3">Concierge</div><span class="a-meta">Message here or call 519-740-2100</span></div><button class="btn sm amber" style="width:auto" data-go="chat">Chat</button></div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Request</span>'+req.map(function(r){return '<button class="list-item" data-toast="Request sent: '+r[0]+'"><span style="flex:1">'+r[0]+'<span class="a-meta" style="display:block;font-weight:500">'+r[1]+'</span></span>'+pill("Request","sand")+'</button>'}).join("")+'</div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">In your room</span><div class="list-item">'+svg("check")+'Feather bed with St. Genève linens</div><div class="list-item">'+svg("check")+'Soaking tub and separate walk-in shower</div><div class="list-item">'+svg("check")+'Oneka toiletries, robes and slippers</div><div class="list-item">'+svg("check")+'Dyson hair dryer, Nespresso machine, mini fridge</div><div class="list-item">'+svg("check")+'Complimentary Wi-Fi and EV charging</div></div>';
+h+='<div class="stack rowlist" style="gap:9px">'+rowH("t-gift","Offers &amp; packages","Country Retreat, Grand Retreat, Stay Longer",pill("Offers"),'data-go="offers"')+'</div>';
+$("#services-body").innerHTML=h}
+
+function renderOffers(){
+var h='<div class="quote">Experience the best of Langdon Hall with a complete overnight package.<span class="who">Packages &amp; specials · rooms from $575 a night</span></div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Packages</span>'+
+[["The Grand Retreat","One night, the Grand Tasting Menu for two and Country Breakfast · Fri–Sun","Grand"],["Country Retreat","One night, three-course dinner in the Dining Room and breakfast","1 night"],["Luxurious Escape","Two nights, dinner each evening and breakfast both mornings","2 nights"],["Christmas Eve &amp; Day","Two-night minimum, festive dinner, breakfast","Dec 24–25"],["New Year\'s Eve","Reception, tasting menu, live music, overnight","Dec 31"]].map(function(o){return '<div class="menu-item"><div style="flex:1"><div class="a-h3">'+o[0]+'</div><span class="a-meta">'+o[1]+'</span></div><span class="price">'+o[2]+'</span></div>'}).join("")+'</div>';
+h+='<div class="card" style="padding:4px 14px"><span class="a-label" style="display:block;padding-top:10px">Promotions</span><div class="menu-item"><div style="flex:1"><div class="a-h3">Stay Longer</div><span class="a-meta">Two nights 10% off, three or more 15% off the room-only rate</span></div></div><div class="menu-item"><div style="flex:1"><div class="a-h3">Suite Savings</div><span class="a-meta">20% off Rose, Attic and Orchard &amp; Pine suites on select nights, online only</span></div></div></div>';
+h+='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="thumb t-gift" style="width:58px;height:58px;display:grid;place-items:center;color:#fff">'+svg("gift",24)+'</span><div style="flex:1;min-width:0"><div class="a-h3">Room add-ons</div><span class="a-meta">Left in the room on arrival · 72 hours\' notice</span></div><button class="pill sand" data-toast="Room add-ons opened">View</button></div>';
+h+='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="thumb t-house" style="width:58px;height:58px;display:grid;place-items:center;color:#fff">'+svg("star",24)+'</span><div style="flex:1;min-width:0"><div class="a-h3">Gift certificates</div><span class="a-meta">A gift of timeless escape</span></div><button class="pill sand" data-toast="Gift certificates opened">Shop</button></div>';
+$("#offers-body").innerHTML=h}
+
+var msgs=[
+{r:"out",t:"Can we bring our dog next time?",ts:"1:02 PM"},
+{r:"in",t:"Yes, well-behaved pets are welcome in our pet-friendly rooms on the terrace level of the Cloister, with a non-refundable $50 cleaning fee per pet and a maximum of two pets per room. Pets are not permitted in the dining areas, spa, pool or fitness room.",ts:"1:03 PM",who:1,a:[["See stay details","go:stay"]]}];
+var KB=[
+[/check.?out|check.?in|late|early/i,"Check-in is from 3:00 PM and check-out is at 11:00 AM. I can request an early check-in or late check-out for you, subject to availability.",[["Request late check-out","toast:Request sent: Late check-out"]]],
+[/dog|pet|puppy|cat/i,"Well-behaved pets are welcome in pet-friendly rooms on the terrace level of the Cloister. There is a non-refundable $50 cleaning fee per pet, up to two pets per room. Pets are not permitted in the dining areas, spa, pool or fitness room.",null],
+[/kid|child|children|teen|age/i,"The spa welcomes guests 14 and over for facials and 16 and over for massage. Wine tastings are for guests 19 and over. Children are welcome in the Dining Room, and there is a children's menu.",null],
+[/spa|massage|facial|treatment|sauna|whirlpool/i,"The Spa is open Saturday to Wednesday 9:00 AM – 6:00 PM and Thursday and Friday 9:00 AM – 8:00 PM. Please give 48 hours' notice to avoid a $100 cancellation fee. The spa direct line is 519-624-3220.",[["Book a treatment","act:spa"],["See spa","go:spa"]]],
+[/pool|swim/i,"The outdoor pool is open from May to Thanksgiving, so it is closed for the season. Overnight guests can use the whirlpool and sauna at the Spa, and the exercise room.",null],
+[/tennis|pickle|archery|yoga/i,"Tennis and pickleball run from May to late September, and archery from May to October, so they are closed for the season. Private yoga needs 7 days' notice, $150 plus HST for up to ten guests.",null],
+[/grand|tasting menu|jason|chef/i,"The Grand Tasting Menu is nine courses by Executive Chef Jason Bangerter, $295 per person, on Friday, Saturday and Sunday evenings for parties of 1 to 4. Pairings: The Globetrotter $160 or World Classics $300.",[["Book the Grand Tasting","act:grand"]]],
+[/wine|sommelier|cellar/i,"Our sommeliers host a complimentary tasting daily at 4:00 PM for overnight guests aged 19 and over. The cellar holds more than 1,400 wines.",[["Book the tasting","act:tasting"]]],
+[/dinner|eat|food|restaurant|lunch|breakfast|dress|attire/i,"Breakfast 7:00 – 10:15 AM, lunch 12:00 – 2:15 PM and dinner 5:00 – 9:00 PM daily in the Dining Room, and lunch and dinner at Wilks Bar. We encourage smart attire in the Dining Room.",[["Book a table","go:dining"]]],
+[/garden|trail|walk|bike|snowshoe|hike/i,"There are 12 km of walking trails, and complimentary bike and snowshoe rental by request. The gardener's tour is daily at 9:30 AM, a greenhouse tour after mid-October.",[["Book the garden tour","act:garden"]]],
+[/car|park|charg|ev\b|lexus|drive/i,"There are EV charging stations at the front of the parking lot. You can also test drive the 2025 Lexus RX 450h+ on site, and have your car detailed before check-out.",[["Request a test drive","toast:Request sent: Lexus test drive"]]],
+[/event|what.?s on|christmas|new year|murder|stratford|theatre/i,"Coming up: Christmas Eve and Day (two-night minimum), New Year's Eve (package only), and the Murder Mystery Dinner on October 30, which is sold out.",[["See what's on","go:events"]]],
+[/voucher|gift|package|offer/i,"We have overnight packages, Stay Longer savings and gift certificates.",[["See offers","go:offers"]]],
+[/human|person|reception|call|phone/i,"Of course. I've flagged this for the team and they will message you in a few minutes. You can also call 519-740-2100.",null]];
+var SUG=["Check-out time","Are pets allowed?","Is the pool open?","Where can I eat tonight?","Talk to a person"];
+function paintMsgs(typing){var m=$("#msgs");
+m.innerHTML=msgs.map(function(x){return '<div class="bubble '+x.r+'">'+esc(x.t)+(x.a?'<div class="acts">'+x.a.map(function(a){return '<button data-x="'+a[1]+'">'+a[0]+'</button>'}).join("")+'</div>':'')+'<small>'+(x.who?"Concierge · ":"")+x.ts+'</small></div>'}).join("")+(typing?'<div class="bubble in typing"><i></i><i></i><i></i></div>':'');
+m.scrollTop=m.scrollHeight}
+function ask(q){var ts=new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});msgs.push({r:"out",t:q,ts:ts});paintMsgs(true);
+var hit=null;for(var i=0;i<KB.length;i++){if(KB[i][0].test(q)){hit=KB[i];break}}
+setTimeout(function(){msgs.push({r:"in",t:hit?hit[1]:"Good question. I'll check with the team and reply here shortly. Meanwhile I can book a table, the spa or an experience, or connect you with reservations.",ts:ts,who:1,a:hit?hit[2]:null});paintMsgs()},750)}
+function renderChat(){paintMsgs();$("#sugg").innerHTML=SUG.map(function(x){return '<button class="chip" data-sug>'+x+'</button>'}).join("")}
+
+function renderStay(){var h='<div class="card hero-pine" style="border:0"><span class="a-label" style="color:rgba(255,255,255,.65)">Reservation LH-70215</span><div style="font-family:var(--display);font-size:27px;font-weight:500;margin-top:3px;line-height:1.1">Langdon Hall</div><div style="font-size:12px;color:rgba(255,255,255,.78)">Cloister Room · Oct 16 – 19 · 2 adults</div></div>';
+h+='<div class="stats"><div class="stat"><span class="a-label">Room charges</span><b>'+money(charged)+'</b></div><div class="stat"><span class="a-label">Bookings</span><b>'+(extra.length+1)+'</b></div></div>';
+if(extra.length)h+='<div class="card timeline" style="padding:14px 14px 0 34px">'+extra.map(function(x){var a=ACTS[x.act];return '<div class="tl now"><span class="t">'+dayLabelFor(x.d)+" · "+x.h+'</span><div class="a-h3">'+esc(nameFor(x))+'</div><span class="a-meta">'+qtyStr(a,x.g)+" · Just booked</span></div>"}).join("")+'</div>';
+h+='<div class="card" style="padding:4px 14px"><div class="list-item">'+svg("key")+'Digital room key<span class="v">Active</span></div><div class="list-item">'+svg("sun")+'Check-in / check-out<span class="v">3 PM / 11 AM</span></div><div class="list-item">'+svg("fork")+'Breakfast<span class="v">7:00 – 10:15 AM</span></div><div class="list-item">'+svg("drop")+'Spa direct line<span class="v">519-624-3220</span></div><div class="list-item">'+svg("bell")+'Activity reminders<button class="switch" data-switch aria-pressed="true" aria-label="Reminders"></button></div><button class="list-item" data-toast="Express check-out set up">'+svg("pin")+'Express check-out<span class="v">Set up</span></button></div>';
+h+='<div class="card" style="display:flex;gap:12px;align-items:center"><span class="icon-btn" style="background:var(--app-mint)">'+svg("phone")+'</span><div style="flex:1"><div class="a-h3">Prefer to talk?</div><span class="a-meta">Reservations · 519-740-2100</span></div></div>';
+$("#stay-body").innerHTML=h}
+
+var views={},railItems={};
+document.querySelectorAll("[data-view]").forEach(function(v){views[v.dataset.view]=v});
+document.querySelectorAll(".rail-item").forEach(function(b){railItems[b.dataset.go]=b});
+var current=null;
+var R={home:renderHome,experiences:renderExperiences,dining:renderDining,spa:renderSpa,events:renderEvents,slots:renderSlots,checkout:renderCheckout,confirmed:renderConfirmed,pass:renderPass,chat:renderChat,services:renderServices,offers:renderOffers,stay:renderStay};
+function render(id){if(R[id])R[id]()}
+function go(id){
+if(!views[id])return;
+var changed=id!==current;current=id;render(id);
+if(!changed)return;
+Object.keys(views).forEach(function(k){views[k].classList.toggle("active",k===id)});
+Object.keys(railItems).forEach(function(k){railItems[k].setAttribute("aria-current",k===id?"true":"false")});
+var sc=views[id].querySelector(".app-scroll");if(sc&&id!=="chat")sc.scrollTop=0;
+var tab=(TABS.filter(function(t){return t.match.indexOf(id)>-1})[0]||{}).id;
+document.querySelectorAll("[data-tab]").forEach(function(t){t.setAttribute("aria-current",t.dataset.tab===tab?"true":"false")});
+var n=NOTES[id];
+$("#n-group").textContent=n.group;$("#n-title").textContent=n.title;$("#n-lede").textContent=n.lede;
+$("#n-list").innerHTML=n.list.map(function(x){return "<li>"+x+"</li>"}).join("");$("#n-why").textContent=n.why;
+var i=ORDER.indexOf(id);$("#prev").disabled=(i<=0);$("#next").disabled=(i>=ORDER.length-1);
+if(history.replaceState)history.replaceState(null,"","#"+id)}
+function step(d){var i=ORDER.indexOf(current)+d;if(i>=0&&i<ORDER.length)go(ORDER[i])}
+function toast(t){var e=$("#toast");if(!e){e=document.createElement("div");e.id="toast";e.style.cssText="position:absolute;left:50%;bottom:92px;transform:translateX(-50%);background:#1F212E;color:#fff;font-size:12.5px;font-weight:700;padding:10px 16px;border-radius:99px;z-index:20;transition:opacity .2s;max-width:80%;text-align:center";document.querySelector(".screen").appendChild(e)}
+e.innerHTML=t;e.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(function(){e.style.opacity=0},2200)}
+function action(x){var p=x.split(":"),k=p[0],v=p.slice(1).join(":");if(k==="act"){setAct(v);go("slots")}else if(k==="go")go(v);else if(k==="toast")toast(v)}
+$("#prev").addEventListener("click",function(){step(-1)});$("#next").addEventListener("click",function(){step(1)});
+document.addEventListener("click",function(e){
+var t;
+if(t=e.target.closest("[data-x]")){action(t.dataset.x);return}
+if(t=e.target.closest("[data-res]")){setAct("table",+t.dataset.res);go("slots");return}
+if(t=e.target.closest("[data-book]")){setAct(t.dataset.book);go("slots");return}
+if(t=e.target.closest("[data-go]")){e.preventDefault();go(t.dataset.go);return}
+if(t=e.target.closest("[data-toast]")){toast(t.dataset.toast);return}
+if(t=e.target.closest("[data-bk-day]")){B.day=+t.dataset.bkDay;renderSlots();return}
+if(t=e.target.closest("[data-bk-hour]")){B.hour=t.dataset.bkHour;renderSlots();return}
+if(t=e.target.closest("[data-bk-var]")){B.vari=+t.dataset.bkVar;renderSlots();return}
+if(t=e.target.closest("[data-bk-addon]")){var i=t.dataset.bkAddon;B.addons[i]=!B.addons[i];renderSlots();return}
+if(t=e.target.closest("[data-step]")){var a=ACTS[B.act];B.guests=Math.max(a.minQty||1,Math.min(a.maxQty||8,B.guests+(+t.dataset.step)));renderSlots();return}
+if(t=e.target.closest("[data-pay]")){B.pay=t.dataset.pay;renderCheckout();return}
+if(t=e.target.closest("#confirm-pay")){confirmBooking();return}
+if(t=e.target.closest("[data-sug]")){ask(t.textContent);return}
+var grp=e.target.closest("[data-chip],[data-seg],[data-day]");
+if(grp){var kind=grp.hasAttribute("data-chip")?"data-chip":grp.hasAttribute("data-seg")?"data-seg":"data-day";
+grp.parentElement.querySelectorAll("["+kind+"]").forEach(function(s){s.setAttribute("aria-pressed",s===grp?"true":"false")});return}
+var sw=e.target.closest("[data-switch]");if(sw)sw.setAttribute("aria-pressed",sw.getAttribute("aria-pressed")==="true"?"false":"true")});
+$("#chat-form").addEventListener("submit",function(e){e.preventDefault();var v=$("#chat-inp").value.trim();if(v){$("#chat-inp").value="";ask(v)}});
+var nb=$("#notes-toggle");
+function setNotes(on){document.body.setAttribute("data-notes",on?"on":"off");nb.setAttribute("aria-pressed",on?"true":"false");try{localStorage.setItem("lh-notes",on?"on":"off")}catch(e){}}
+nb.addEventListener("click",function(){setNotes(document.body.getAttribute("data-notes")!=="on")});
+document.addEventListener("keydown",function(e){if(e.target.matches("input,textarea"))return;
+if(e.key==="ArrowRight")step(1);if(e.key==="ArrowLeft")step(-1);if(e.key==="n"||e.key==="N")nb.click()});
+var sn=null;try{sn=localStorage.getItem("lh-notes")}catch(e){}
+setNotes(sn==="on");
+var start=(location.hash||"").replace("#","");
+go(views[start]?start:"welcome");
+})();
+</script></body></html>
